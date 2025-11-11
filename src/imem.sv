@@ -1,28 +1,30 @@
-`timescale 1ns/1ps
-module imem(
-  input  logic [31:0] a,
-  output logic [31:0] rd
+// -----------------------------------------------------------
+// Instruction Memory (IMEM)
+// -----------------------------------------------------------
+module imem (
+    input  logic [31:0] a,
+    output logic [31:0] rd
 );
-  logic [31:0] RAM[0:1023];
+    // Memoria de instrucciones: 256 palabras de 32 bits
+    logic [31:0] RAM [0:255];
 
 `ifndef SYNTHESIS
-  // --- SIMULACIÓN: permite +IMEM=<archivo>
-  string fname;
-  initial begin
-    // Si no se pasa +IMEM= por parámetro, se usa la ruta por defecto dentro de testbench/
-    if (!$value$plusargs("IMEM=%s", fname)) fname = "testbench/riscvtest.txt";
-    $display("[IMEM] Cargando desde '%0s'", fname);
-    $readmemh(fname, RAM);
-    // $display("[IMEM] RAM[0]=%h RAM[1]=%h RAM[2]=%h", RAM[0], RAM[1], RAM[2]);
-  end
+    // --- Solo en simulación ---
+    initial begin
+        $display("[IMEM] Cargando desde 'testbench/riscvtest.txt'");
+        $readmemh("testbench/riscvtest.txt", RAM);
+    end
 `else
-  // --- SÍNTESIS: sin string/plusargs (ruta fija)
-  initial begin
-    $readmemh("testbench/riscvtest.txt", RAM, 0);
-  end
+    // --- En síntesis (Yosys) ---
+    integer i;
+    initial begin
+        for (i = 0; i < 256; i = i + 1) begin
+            // Cargar NOP: 32'h00000013 (addi x0,x0,0)
+            RAM[i] = 32'h00000013;
+        end
+    end
 `endif
 
-  // 64 palabras -> usa 6 bits de índice (evita mega-mux en síntesis)
-  assign rd = RAM[a[11:2]];
-
+    // Lectura síncrona por dirección alineada
+    assign rd = RAM[a[9:2]];  // usa bits 9:2 -> 256 posiciones (4 bytes por instrucción)
 endmodule
