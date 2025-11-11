@@ -74,9 +74,9 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "$CONTAINER_NAME"; then
       echo "🟢 Contenedor $CONTAINER_NAME en ejecución (hostname $HOSTNAME_REQUIRED). Abriendo shell..."
       exec docker exec -it \
         -e DISPLAY=$DISPLAY \
-        -v /tmp/.X11-unix:/tmp/.X11-unix \
         -w "$WORKDIR" \
         "$CONTAINER_NAME" /bin/bash
+
     else
       echo "🔵 Iniciando contenedor existente $CONTAINER_NAME (hostname $HOSTNAME_REQUIRED)..."
       exec docker start -ai "$CONTAINER_NAME"
