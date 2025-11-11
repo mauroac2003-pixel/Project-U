@@ -9,15 +9,16 @@ module imem(
   // --- SIMULACIÓN: permite +IMEM=<archivo>
   string fname;
   initial begin
-    if (!$value$plusargs("IMEM=%s", fname)) fname = "riscvtest.txt";
+    // Si no se pasa +IMEM= por parámetro, se usa la ruta por defecto dentro de testbench/
+    if (!$value$plusargs("IMEM=%s", fname)) fname = "testbench/riscvtest.txt";
     $display("[IMEM] Cargando desde '%0s'", fname);
     $readmemh(fname, RAM);
     // $display("[IMEM] RAM[0]=%h RAM[1]=%h RAM[2]=%h", RAM[0], RAM[1], RAM[2]);
   end
 `else
-  // --- SÍNTESIS: sin string/plusargs
+  // --- SÍNTESIS: sin string/plusargs (ruta fija)
   initial begin
-    $readmemh("riscvtest.txt", RAM, 0); 
+    $readmemh("testbench/riscvtest.txt", RAM, 0);
   end
 `endif
 
