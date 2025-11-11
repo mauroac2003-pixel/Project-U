@@ -1,25 +1,8 @@
 #!/usr/bin/env bash
 # Start or reattach to the EDA container, mounting the current folder as the workspace.
 #
-# Agregado soporte para X11 (GTKWave / interfaz gráfica)
-# - Requiere ejecutar previamente:  xhost +local:docker
-#
-# Behavior:
-# - Si la imagen no existe, la construye.
-# - Si el contenedor ya existe, abre shell dentro.
-# - Si está detenido, lo inicia y adjunta.
-# - Caso contrario, crea un contenedor nuevo montando $(pwd) a /workspace.
-#
-# Env vars (opcionales):
-#   IMAGE          Nombre de la imagen (default: eda-env)
-#   CONTAINER_NAME Nombre del contenedor (default: eda-dev)
-#   WORKDIR        Directorio de trabajo dentro del contenedor (default: /workspace)
-#   HOST_DIR       Directorio del host a montar (default: current directory)
-#
-# Hostname fijo: el3310
-# Flags:
-#   --clean        Elimina el contenedor existente
-#   --rebuild      Fuerza la reconstrucción de la imagen
+# Soporta X11: permite abrir GTKWave desde el contenedor. Necesita
+# ejecutar en el host:  xhost +local:docker
 
 set -euo pipefail
 
@@ -29,10 +12,6 @@ WORKDIR=${WORKDIR:-/workspace}
 HOST_DIR=${HOST_DIR:-"$(pwd)"}
 HOSTNAME_REQUIRED="el3310"
 
-usage() {
-  echo "Uso: $0 [--clean] [--rebuild]" >&2
-}
-
 CLEAN=no
 REBUILD=no
 
@@ -40,52 +19,51 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --clean) CLEAN=yes ;;
     --rebuild) REBUILD=yes ;;
-    -h|--help) usage; exit 0 ;;
-    *) echo "Opción desconocida: $1" >&2; usage; exit 2 ;;
+    -h|--help) echo "Usage: $0 [--clean] [--rebuild]"; exit 0 ;;
+    *) echo "Unknown option: $1"; exit 2 ;;
   esac
   shift
 done
 
 if [ "$CLEAN" = "yes" ]; then
   docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-  echo "🧹 Contenedor $CONTAINER_NAME eliminado."
+  echo "Removed container $CONTAINER_NAME"
 fi
 
 if [ "$REBUILD" = "yes" ]; then
-  echo "🔧 Reconstruyendo imagen $IMAGE ..."
+  echo "Rebuilding image $IMAGE ..."
   docker build -t "$IMAGE" .
 fi
 
-# Si la imagen no existe
+# Build image if it doesn't exist
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-  echo "⚙️ Imagen $IMAGE no encontrada. Construyendo..."
+  echo "Image $IMAGE not found. Building..."
   docker build -t "$IMAGE" .
 fi
 
-# Si ya existe el contenedor
+# If container exists
 if docker ps -a --format '{{.Names}}' | grep -Fxq "$CONTAINER_NAME"; then
-  EXISTING_HOSTNAME=$(docker inspect -f '{{.Config.Hostname}}' "$CONTAINER_NAME" 2>/dev/null || echo "")
-  if [ "$EXISTING_HOSTNAME" != "$HOSTNAME_REQUIRED" ]; then
-    echo "⚠️  El contenedor $CONTAINER_NAME tiene hostname '$EXISTING_HOSTNAME' (esperado '$HOSTNAME_REQUIRED'). Recreando..."
+  HOSTNAME=$(docker inspect -f '{{.Config.Hostname}}' "$CONTAINER_NAME")
+  if [ "$HOSTNAME" != "$HOSTNAME_REQUIRED" ]; then
     docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
   else
-    # Si ya está corriendo, entra directo
+    # If running, just exec
     if docker ps --format '{{.Names}}' | grep -Fxq "$CONTAINER_NAME"; then
-      echo "🟢 Contenedor $CONTAINER_NAME en ejecución (hostname $HOSTNAME_REQUIRED). Abriendo shell..."
+      echo "Container $CONTAINER_NAME is running (hostname $HOSTNAME_REQUIRED). Opening shell..."
       exec docker exec -it \
         -e DISPLAY=$DISPLAY \
         -w "$WORKDIR" \
-        "$CONTAINER_NAME" /bin/bash
-
+        "$CONTAINER_NAME" \
+        /bin/bash
     else
-      echo "🔵 Iniciando contenedor existente $CONTAINER_NAME (hostname $HOSTNAME_REQUIRED)..."
+      echo "Starting existing container $CONTAINER_NAME (hostname $HOSTNAME_REQUIRED)..."
       exec docker start -ai "$CONTAINER_NAME"
     fi
   fi
 fi
 
-# Crear nuevo contenedor con X11 habilitado
-echo "🚀 Creando contenedor $CONTAINER_NAME (hostname $HOSTNAME_REQUIRED) con soporte X11..."
+# Create new container
+echo "Creating container $CONTAINER_NAME (hostname $HOSTNAME_REQUIRED) and mounting $HOST_DIR -> $WORKDIR"
 exec docker run -it \
   --name "$CONTAINER_NAME" \
   --hostname "$HOSTNAME_REQUIRED" \
