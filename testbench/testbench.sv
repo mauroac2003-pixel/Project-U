@@ -64,7 +64,7 @@ module testbench;
       if (dut.PC !== 32'h00000100)
         $display("FAIL: PC final incorrecto para ordenamiento");
 
-      $display("🎉 PASS: Programa Ordenamiento finalizó (validación específica opcional).");
+      $display(" PASS: Programa Ordenamiento finalizó (validación específica opcional).");
     end else begin
       $display(" WARNING: No hay validación definida para este programa.");
     end
