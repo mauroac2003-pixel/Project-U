@@ -1,69 +1,106 @@
 # ================================================================
-#  TESTBENCH INDIVIDUAL O COMPLETO - OPCIÓN INTERACTIVA
+#  Proyecto U - Makefile extendido con menú interactivo
 # ================================================================
-test:
-	@echo "🔧 Selecciona qué test ejecutar:"
-	@echo "  1. Testbench completo (testbench.sv)"
-	@echo "  2. Todos los testbenches individuales"
-	@read -p "Opción (1 o 2): " opt; \
+
+# Rutas
+SRC_DIR     := src
+TB_DIR      := testbench
+OUT_DIR     := sim_output
+
+# Módulos
+TOP_MODULE  := top
+TB_TOP      := testbench
+LIB_PATH    := /workspace/NanGate_15nm_OCL_v0.1_2014_06.A/front_end/timing_power_noise/NLDM
+LIB_FILE    := $(LIB_PATH)/NanGate_15nm_OCL_typical_conditional_nldm.lib
+
+help:
+	@echo "🔧 Comandos disponibles:"
+	@echo "  make help       -> Mostrar esta ayuda"
+	@echo "  make sim-rtl    -> Simulación RTL (menu interactivo)"
+	@echo "  make synth      -> Síntesis (Yosys + NanGate 15nm)"
+	@echo "  make sim-gls    -> Simulación a nivel de compuerta"
+	@echo "  make waves-rtl  -> Ver ondas de RTL en GTKWave"
+	@echo "  make waves-gls  -> Ver ondas de GLS en GTKWave"
+	@echo "  make clean      -> Borrar archivos generados"
+
+# ================================================================
+#  SIMULACIÓN RTL (menu interactivo)
+# ================================================================
+sim-rtl:
+	@echo "🔧 Selecciona una opción:"
+	@echo "  1. Ejecutar testbench completo (testbench.sv)"
+	@echo "  2. Ejecutar testbenches de módulos individuales"
+	@read -p " Opción (1 o 2): " opt; \
 	if [ $$opt = "1" ]; then \
-		make sim-rtl; \
+		echo "📦 Selecciona el programa de ensamblador a simular:"; \
+		echo "  1. riscvtest1.txt (Cifrado)"; \
+		echo "  2. riscvtest2.txt (Ordenamiento)"; \
+		read -p " Opción (1 o 2): " asm_opt; \
+		if [ $$asm_opt = "1" ]; then \
+			echo "🚀 Ejecutando simulación con testbench/riscvtest1.txt"; \
+			cp testbench/riscvtest1.txt testbench/riscvtest.txt; \
+		else \
+			echo "🚀 Ejecutando simulación con testbench/riscvtest2.txt"; \
+			cp testbench/riscvtest2.txt testbench/riscvtest.txt; \
+		fi; \
+		vlib $(OUT_DIR)/work || true; \
+		vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $(TB_DIR)/$(TB_TOP).sv; \
+		vsim -c -do "vcd file $(OUT_DIR)/dump_rtl.vcd; vcd add -r /*; run -all; quit -f" \
+			-lib $(OUT_DIR)/work $(TB_TOP); \
 	elif [ $$opt = "2" ]; then \
-		make test-all; \
+		echo "▶️ Ejecutando testbenches de módulos individuales..."; \
+		for tb in $(TB_DIR)/*_tb.sv; do \
+			tb_mod=$$(basename $$tb .sv); \
+			echo "▶️ Simulando $$tb_mod..."; \
+			vlib $(OUT_DIR)/work || true; \
+			vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $$tb; \
+			vsim -c -do "run -all; quit -f" -lib $(OUT_DIR)/work $$tb_mod || exit $$?; \
+		done; \
 	else \
-		echo "❌ Opción inválida"; exit 1; \
+		echo "❌ Opción no válida."; \
+		exit 1; \
 	fi
+	@echo "✅ Simulación RTL finalizada."
 
 # ================================================================
-#  EJECUTAR TODOS LOS TESTBENCHES INDIVIDUALES
+#  SÍNTESIS
 # ================================================================
-test-all:
-	@echo "⚙️ Ejecutando todos los testbenches individuales..."
-	@make test-adder
-	@make test-alu
-	@make test-aludec
-	@make test-maindec
-	@make test-controller
-	@make test-dmem
-	@make test-imem
-	@make test-extend
-	@make test-flopr
-	@make test-regfile
-	@make test-datapath
-	@echo "✅ Todos los testbenches individuales ejecutados correctamente."
+synth: $(OUT_DIR)
+	@echo "🔧 Ejecutando síntesis con Yosys..."
+	yosys -p "read_verilog -sv $(SRC_DIR)/design.sv; \
+	          synth -top $(TOP_MODULE); \
+	          dfflibmap -liberty $(LIB_FILE); \
+	          abc -liberty $(LIB_FILE); \
+	          write_verilog $(OUT_DIR)/$(TOP_MODULE)_netlist.v"
+	@echo "✅ Síntesis completada."
 
 # ================================================================
-#  TESTBENCHES INDIVIDUALES POR MÓDULO
+#  SIMULACIÓN A NIVEL DE COMPUERTA (GLS)
 # ================================================================
-test-adder:
-	vlog src/adder.sv testbench/adder_tb.sv && vsim -c adder_tb -do "run -all; quit"
+sim-gls: $(OUT_DIR)
+	@echo "🔧 Simulación a nivel de compuerta (GLS)..."
+	vlib $(OUT_DIR)/work || true
+	vlog -sv -work $(OUT_DIR)/work $(OUT_DIR)/$(TOP_MODULE)_netlist.v $(TB_DIR)/$(TB_TOP).sv
+	vsim -c -do "vcd file $(OUT_DIR)/dump_gls.vcd; vcd add -r /*; run -all; quit -f" \
+		-lib $(OUT_DIR)/work $(TB_TOP)
+	@echo "✅ Simulación GLS completada."
 
-test-alu:
-	vlog src/alu.sv testbench/alu_tb.sv && vsim -c alu_tb -do "run -all; quit"
+# ================================================================
+#  GTKWave
+# ================================================================
+waves-rtl:
+	gtkwave $(OUT_DIR)/dump_rtl.vcd &
 
-test-aludec:
-	vlog src/aludec.sv testbench/aludec_tb.sv && vsim -c aludec_tb -do "run -all; quit"
+waves-gls:
+	gtkwave $(OUT_DIR)/dump_gls.vcd &
 
-test-maindec:
-	vlog src/maindec.sv testbench/maindec_tb.sv && vsim -c maindec_tb -do "run -all; quit"
+# ================================================================
+#  OUTPUTS
+# ================================================================
+$(OUT_DIR):
+	@mkdir -p $(OUT_DIR)
 
-test-controller:
-	vlog src/controller.sv src/maindec.sv src/aludec.sv testbench/controller_tb.sv && vsim -c controller_tb -do "run -all; quit"
-
-test-dmem:
-	vlog src/dmem.sv testbench/dmem_tb.sv && vsim -c dmem_tb -do "run -all; quit"
-
-test-imem:
-	vlog src/imem.sv testbench/imem_tb.sv && vsim -c imem_tb -do "run -all; quit"
-
-test-extend:
-	vlog src/extend.sv testbench/extend_tb.sv && vsim -c extend_tb -do "run -all; quit"
-
-test-flopr:
-	vlog src/flopr.sv testbench/flopr_tb.sv && vsim -c flopr_tb -do "run -all; quit"
-
-test-regfile:
-	vlog src/regfile.sv testbench/regfile_tb.sv && vsim -c regfile_tb -do "run -all; quit"
-
-test-datapath:
-	vlog src/*.sv testbench/datapath_tb.sv && vsim -c datapath_tb -do "run -all; quit"
+clean:
+	@echo "🧹 Limpiando archivos generados..."
+	rm -rf $(OUT_DIR)
+	@echo "✅ Limpieza completada."
