@@ -1,85 +1,80 @@
 `timescale 1ns/1ps
 
 module testbench;
-  // Reloj y reset
-  reg clk   = 1'b0;
-  reg reset = 1'b1;
+
+  // Señales de reloj y reset
+  reg clk = 0;
+  reg reset = 1;
   always #5 clk = ~clk;
 
-  // Instancia del TOP
-  top dut (.clk(clk), .reset(reset), .WriteData(), .DataAdr(), .MemWrite());
+  // Instancia del diseño
+  top dut(.clk(clk), .reset(reset), .WriteData(), .DataAdr(), .MemWrite());
 
-  // Dirección de finalización común
-  localparam [31:0] FIN_ADDR = 32'h000000BC;
-
-  // Nombre del programa cargado
+  // Variables
   string filename;
+  int k;
+  bit hit_fin;
+
+  // Dirección donde termina el programa
+  localparam [31:0] FIN_ADDR = 32'h000000bc;
 
   initial begin
-    // Obtener el archivo cargado desde +program=
+    // Obtener nombre del archivo pasado por +program
     if (!$value$plusargs("program=%s", filename)) begin
       $display("❌ ERROR: No se proporcionó +program");
       $finish;
     end
 
-    $display("📦 Testbench cargando programa: %s", filename);
+    $display("📦 Cargando programa: %s", filename);
 
-    // Reset corto
+    // Liberar el reset
     repeat (2) @(posedge clk);
-    reset = 1'b0;
+    reset = 0;
 
-    // Espera hasta alcanzar la dirección de fin
-    int k;
-    bit hit_fin = 1'b0;
+    // Esperar a que PC alcance la dirección de fin
+    hit_fin = 0;
     for (k = 0; k < 50000; k = k + 1) begin
       @(posedge clk);
-      if (dut.PC === FIN_ADDR) begin
-        hit_fin = 1'b1;
-        disable wait_loop;
+      if (dut.PC == FIN_ADDR) begin
+        hit_fin = 1;
+        break;
       end
     end
 
-  wait_loop: assert (hit_fin)
-    else begin
-      $display("❌ FAIL: Timeout. PC no llegó a la dirección <fin> (0x%08h)", FIN_ADDR);
+    if (!hit_fin) begin
+      $display("❌ FAIL: Timeout — PC no alcanzó la dirección de fin (0x%08h)", FIN_ADDR);
       $finish;
     end
 
-    // Validaciones específicas
-    $display("PC final: 0x%08h", dut.PC);
+    // Mostrar resultados
+    $display("PC final:   0x%08h", dut.PC);
     $display("a0 (x10)   = 0x%08h", dut.rvsingle.dp.rf.rf[10]);
     $display("sp (x2)    = 0x%08h", dut.rvsingle.dp.rf.rf[2]);
 
+    // Validaciones por programa
     if (filename == "testbench/riscvtest1.txt") begin
-      // === Validación: Cifrado factorial ===
       if (dut.rvsingle.dp.rf.rf[10] !== 32'h00fff05f) begin
-        $display("❌ FAIL: a0(x10)=0x%08h != 0x00fff05f", dut.rvsingle.dp.rf.rf[10]);
+        $display("❌ FAIL: Valor incorrecto en x10 (a0). Esperado 0x00fff05f");
         $finish;
       end
       if (dut.rvsingle.dp.rf.rf[2] !== 32'h00100000) begin
-        $display("❌ FAIL: sp(x2)=0x%08h != 0x00100000", dut.rvsingle.dp.rf.rf[2]);
+        $display("❌ FAIL: Stack pointer incorrecto (x2). Esperado 0x00100000");
         $finish;
       end
-      $display("✅ PASS: Cifrado factorial ejecutado correctamente.");
+      $display("✅ PASS: Cifrado factorial correcto.");
     end
 
     else if (filename == "testbench/riscvtest2.txt") begin
-      // === Validación: Ordenamiento + Transformación + Búsqueda ===
-      if (dut.PC !== FIN_ADDR) begin
-        $display("❌ FAIL: PC final incorrecto para ordenamiento");
-      end
-
       if (dut.rvsingle.dp.rf.rf[10] !== 32'd3) begin
-        $display("❌ FAIL: Índice de búsqueda binaria incorrecto. Esperado: 3, Obtenido: %0d", dut.rvsingle.dp.rf.rf[10]);
+        $display("❌ FAIL: Índice incorrecto de búsqueda binaria. Esperado: 3, Obtenido: %0d", dut.rvsingle.dp.rf.rf[10]);
         $finish;
-      end else begin
-        $display("✅ PASS: Programa Ordenamiento finalizó correctamente.");
       end
+      $display("✅ PASS: Ordenamiento + búsqueda binaria exitosos.");
 
-      // Imprimir memoria transformada (opcional)
-      $display("🧠 Arreglo modificado en memoria (base = 0x00400000):");
+      // Mostrar contenido de memoria (opcional)
+      $display("🧠 Arreglo transformado en memoria (RAM interna):");
       for (int i = 0; i < 6; i++) begin
-        $display("mem[%0d] = 0x%08h", i, dut.rvsingle.dp.dmem.RAM[256 + i]);
+        $display("RAM[%0d] = 0x%08h", i, dut.rvsingle.dp.dmem.RAM[256 + i]);
       end
     end
 
@@ -89,4 +84,5 @@ module testbench;
 
     $finish;
   end
+
 endmodule
