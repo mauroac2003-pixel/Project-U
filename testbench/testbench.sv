@@ -74,7 +74,7 @@ module testbench;
       // Mostrar contenido de memoria (opcional)
       $display("🧠 Arreglo transformado en memoria (RAM interna):");
       for (int i = 0; i < 6; i++) begin
-        $display("RAM[%0d] = 0x%08h", i, dut.rvsingle.dp.dmem.RAM[256 + i]);
+        $display("RAM[%0d] = 0x%08h", i, dut.dmem.RAM[256 + i]);
       end
     end
 
