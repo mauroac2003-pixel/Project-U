@@ -1,64 +1,69 @@
 # ================================================================
-#  Proyecto 2 - Diseño de Sistemas Digitales
-#  Makefile con selección de programa en sim-rtl
+#  TESTBENCH INDIVIDUAL O COMPLETO - OPCIÓN INTERACTIVA
 # ================================================================
+test:
+	@echo "🔧 Selecciona qué test ejecutar:"
+	@echo "  1. Testbench completo (testbench.sv)"
+	@echo "  2. Todos los testbenches individuales"
+	@read -p "Opción (1 o 2): " opt; \
+	if [ $$opt = "1" ]; then \
+		make sim-rtl; \
+	elif [ $$opt = "2" ]; then \
+		make test-all; \
+	else \
+		echo "❌ Opción inválida"; exit 1; \
+	fi
 
-SRC_DIR     := src
-TB_DIR      := testbench
-OUT_DIR     := sim_output
+# ================================================================
+#  EJECUTAR TODOS LOS TESTBENCHES INDIVIDUALES
+# ================================================================
+test-all:
+	@echo "⚙️ Ejecutando todos los testbenches individuales..."
+	@make test-adder
+	@make test-alu
+	@make test-aludec
+	@make test-maindec
+	@make test-controller
+	@make test-dmem
+	@make test-imem
+	@make test-extend
+	@make test-flopr
+	@make test-regfile
+	@make test-datapath
+	@echo "✅ Todos los testbenches individuales ejecutados correctamente."
 
-TB_TOP      := testbench
-TOP_MODULE  := top
+# ================================================================
+#  TESTBENCHES INDIVIDUALES POR MÓDULO
+# ================================================================
+test-adder:
+	vlog src/adder.sv testbench/adder_tb.sv && vsim -c adder_tb -do "run -all; quit"
 
-LIB_PATH    := /workspace/NanGate_15nm_OCL_v0.1_2014_06.A/front_end/timing_power_noise/NLDM
-LIB_FILE    := $(LIB_PATH)/NanGate_15nm_OCL_typical_conditional_nldm.lib
+test-alu:
+	vlog src/alu.sv testbench/alu_tb.sv && vsim -c alu_tb -do "run -all; quit"
 
-help:
-	@echo "Available targets:"
-	@echo "  make sim-rtl   -> RTL simulation con selección de programa"
-	@echo "  make synth     -> Yosys synthesis (NanGate 15nm)"
-	@echo "  make sim-gls   -> Gate-level simulation (ModelSim)"
-	@echo "  make waves-rtl -> GTKWave RTL"
-	@echo "  make waves-gls -> GTKWave GLS"
-	@echo "  make clean     -> Clean outputs"
+test-aludec:
+	vlog src/aludec.sv testbench/aludec_tb.sv && vsim -c aludec_tb -do "run -all; quit"
 
-sim-rtl: $(OUT_DIR)
-	@echo "🔧 Selecciona el programa:"
-	@echo "  1. riscvtest1.txt (Cifrado)"
-	@echo "  2. riscvtest2.txt (Ordenamiento)"
-	@read -p ' Opción (1 o 2): ' opt; \
-	case $$opt in \
-	  1) program=$(TB_DIR)/riscvtest1.txt ;; \
-	  2) program=$(TB_DIR)/riscvtest2.txt ;; \
-	  *) echo ' Opción inválida'; exit 1 ;; \
-	esac; \
-	echo "🚀 Ejecutando simulación con $$program"; \
-	vlib $(OUT_DIR)/work || true; \
-	vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $(TB_DIR)/$(TB_TOP).sv; \
-	vsim -c -do "vcd file $(OUT_DIR)/dump_rtl.vcd; vcd add -r /*; run -all; quit -f" \
-	  -lib $(OUT_DIR)/work $(TB_TOP) +program=$$program
+test-maindec:
+	vlog src/maindec.sv testbench/maindec_tb.sv && vsim -c maindec_tb -do "run -all; quit"
 
-synth: $(OUT_DIR)
-	yosys -p "read_verilog -sv $(SRC_DIR)/design.sv; \
-	          synth -top $(TOP_MODULE); \
-	          dfflibmap -liberty $(LIB_FILE); \
-	          abc -liberty $(LIB_FILE); \
-	          write_verilog $(OUT_DIR)/$(TOP_MODULE)_netlist.v"
+test-controller:
+	vlog src/controller.sv src/maindec.sv src/aludec.sv testbench/controller_tb.sv && vsim -c controller_tb -do "run -all; quit"
 
-sim-gls: $(OUT_DIR)
-	vlib $(OUT_DIR)/work || true
-	vlog -sv -work $(OUT_DIR)/work $(OUT_DIR)/$(TOP_MODULE)_netlist.v $(TB_DIR)/$(TB_TOP).sv
-	vsim -c -do "vcd file $(OUT_DIR)/dump_gls.vcd; vcd add -r /*; run -all; quit -f" \
-		-lib $(OUT_DIR)/work $(TB_TOP)
+test-dmem:
+	vlog src/dmem.sv testbench/dmem_tb.sv && vsim -c dmem_tb -do "run -all; quit"
 
-waves-rtl:
-	gtkwave $(OUT_DIR)/dump_rtl.vcd &
+test-imem:
+	vlog src/imem.sv testbench/imem_tb.sv && vsim -c imem_tb -do "run -all; quit"
 
-waves-gls:
-	gtkwave $(OUT_DIR)/dump_gls.vcd &
+test-extend:
+	vlog src/extend.sv testbench/extend_tb.sv && vsim -c extend_tb -do "run -all; quit"
 
-$(OUT_DIR):
-	mkdir -p $(OUT_DIR)
+test-flopr:
+	vlog src/flopr.sv testbench/flopr_tb.sv && vsim -c flopr_tb -do "run -all; quit"
 
-clean:
-	rm -rf $(OUT_DIR)
+test-regfile:
+	vlog src/regfile.sv testbench/regfile_tb.sv && vsim -c regfile_tb -do "run -all; quit"
+
+test-datapath:
+	vlog src/*.sv testbench/datapath_tb.sv && vsim -c datapath_tb -do "run -all; quit"
