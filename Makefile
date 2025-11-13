@@ -7,16 +7,16 @@ SRC_DIR     := src
 TB_DIR      := testbench
 OUT_DIR     := sim_output
 
-# Módulos
 TOP_MODULE  := top
 TB_TOP      := testbench
+
 LIB_PATH    := /workspace/NanGate_15nm_OCL_v0.1_2014_06.A/front_end/timing_power_noise/NLDM
 LIB_FILE    := $(LIB_PATH)/NanGate_15nm_OCL_typical_conditional_nldm.lib
 
 help:
 	@echo "🔧 Comandos disponibles:"
 	@echo "  make help       -> Mostrar esta ayuda"
-	@echo "  make sim-rtl    -> Simulación RTL (menu interactivo)"
+	@echo "  make sim-rtl    -> Simulación RTL (menú interactivo)"
 	@echo "  make synth      -> Síntesis (Yosys + NanGate 15nm)"
 	@echo "  make sim-gls    -> Simulación a nivel de compuerta"
 	@echo "  make waves-rtl  -> Ver ondas de RTL en GTKWave"
@@ -24,30 +24,29 @@ help:
 	@echo "  make clean      -> Borrar archivos generados"
 
 # ================================================================
-#  SIMULACIÓN RTL (menu interactivo)
+#  SIMULACIÓN RTL CON MENÚ
 # ================================================================
 sim-rtl:
 	@echo "🔧 Selecciona una opción:"
 	@echo "  1. Ejecutar testbench completo (testbench.sv)"
 	@echo "  2. Ejecutar testbenches de módulos individuales"
 	@read -p " Opción (1 o 2): " opt; \
-	if [ $$opt = "1" ]; then \
+	if [ "$$opt" = "1" ]; then \
 		echo "📦 Selecciona el programa de ensamblador a simular:"; \
 		echo "  1. riscvtest1.txt (Cifrado)"; \
 		echo "  2. riscvtest2.txt (Ordenamiento)"; \
 		read -p " Opción (1 o 2): " asm_opt; \
-		if [ $$asm_opt = "1" ]; then \
-			echo "🚀 Ejecutando simulación con testbench/riscvtest1.txt"; \
-			cp testbench/riscvtest1.txt testbench/riscvtest.txt; \
+		if [ "$$asm_opt" = "1" ]; then \
+			PROGRAM="testbench/riscvtest1.txt"; \
 		else \
-			echo "🚀 Ejecutando simulación con testbench/riscvtest2.txt"; \
-			cp testbench/riscvtest2.txt testbench/riscvtest.txt; \
+			PROGRAM="testbench/riscvtest2.txt"; \
 		fi; \
+		echo "🚀 Ejecutando simulación con $$PROGRAM"; \
 		vlib $(OUT_DIR)/work || true; \
 		vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $(TB_DIR)/$(TB_TOP).sv; \
 		vsim -c -do "vcd file $(OUT_DIR)/dump_rtl.vcd; vcd add -r /*; run -all; quit -f" \
-			-lib $(OUT_DIR)/work $(TB_TOP); \
-	elif [ $$opt = "2" ]; then \
+		      -lib $(OUT_DIR)/work $(TB_TOP) +program=$$PROGRAM; \
+	elif [ "$$opt" = "2" ]; then \
 		echo "▶️ Ejecutando testbenches de módulos individuales..."; \
 		for tb in $(TB_DIR)/*_tb.sv; do \
 			tb_mod=$$(basename $$tb .sv); \
@@ -83,7 +82,6 @@ sim-gls: $(OUT_DIR)
 	vlog -sv -work $(OUT_DIR)/work $(OUT_DIR)/$(TOP_MODULE)_netlist.v $(TB_DIR)/$(TB_TOP).sv
 	vsim -c -do "vcd file $(OUT_DIR)/dump_gls.vcd; vcd add -r /*; run -all; quit -f" \
 		-lib $(OUT_DIR)/work $(TB_TOP)
-	@echo "✅ Simulación GLS completada."
 
 # ================================================================
 #  GTKWave
@@ -95,7 +93,7 @@ waves-gls:
 	gtkwave $(OUT_DIR)/dump_gls.vcd &
 
 # ================================================================
-#  OUTPUTS
+#  LIMPIEZA
 # ================================================================
 $(OUT_DIR):
 	@mkdir -p $(OUT_DIR)
