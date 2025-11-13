@@ -1,104 +1,67 @@
-# ================================================================
-#  Proyecto U - Makefile extendido con menú interactivo
-# ================================================================
+# Makefile - Simulación RTL con menú interactivo
 
-# Rutas
-SRC_DIR     := src
-TB_DIR      := testbench
-OUT_DIR     := sim_output
+# Directorios
+SRC_DIR = src
+TB_DIR = testbench
+BUILD_DIR = sim_output
+LIB_DIR = $(BUILD_DIR)/work
 
-TOP_MODULE  := top
-TB_TOP      := testbench
+# Archivos de origen
+SRC_FILES = $(wildcard $(SRC_DIR)/*.sv)
+RTL_TB = $(TB_DIR)/testbench.sv
 
-LIB_PATH    := /workspace/NanGate_15nm_OCL_v0.1_2014_06.A/front_end/timing_power_noise/NLDM
-LIB_FILE    := $(LIB_PATH)/NanGate_15nm_OCL_typical_conditional_nldm.lib
+# Lista de testbenches individuales
+MODULE_TB_LIST := adder_tb alu_tb aludec_tb controller_tb datapath_tb \
+                  dmem_tb extend_tb flopr_tb imem_tb maindec_tb mux2_tb \
+                  mux3_tb regfile_tb
+
+# Comando para simular
+VSIM = vsim -c -do "run -all; quit -f"
+
+# Crear biblioteca si no existe
+$(LIB_DIR):
+	@vlib $(LIB_DIR)
+
+.PHONY: help sim-rtl sim-modules clean
 
 help:
-	@echo "🔧 Comandos disponibles:"
-	@echo "  make help       -> Mostrar esta ayuda"
-	@echo "  make sim-rtl    -> Simulación RTL (menú interactivo)"
-	@echo "  make synth      -> Síntesis (Yosys + NanGate 15nm)"
-	@echo "  make sim-gls    -> Simulación a nivel de compuerta"
-	@echo "  make waves-rtl  -> Ver ondas de RTL en GTKWave"
-	@echo "  make waves-gls  -> Ver ondas de GLS en GTKWave"
-	@echo "  make clean      -> Borrar archivos generados"
+	@echo "Opciones disponibles:"
+	@echo "  make sim-rtl       -> Simula con testbench completo (selección interactiva)"
+	@echo "  make sim-modules   -> Simula todos los módulos individuales secuencialmente"
+	@echo "  make clean         -> Elimina archivos de simulación"
 
-# ================================================================
-#  SIMULACIÓN RTL CON MENÚ
-# ================================================================
-sim-rtl:
+sim-rtl: $(LIB_DIR)
 	@echo "🔧 Selecciona una opción:"
 	@echo "  1. Ejecutar testbench completo (testbench.sv)"
 	@echo "  2. Ejecutar testbenches de módulos individuales"
 	@read -p " Opción (1 o 2): " opt; \
-	if [ "$$opt" = "1" ]; then \
-		echo "📦 Selecciona el programa de ensamblador a simular:"; \
-		echo "  1. riscvtest1.txt (Cifrado)"; \
-		echo "  2. riscvtest2.txt (Ordenamiento)"; \
-		read -p " Opción (1 o 2): " asm_opt; \
-		if [ "$$asm_opt" = "1" ]; then \
-			PROGRAM="testbench/riscvtest1.txt"; \
-		else \
-			PROGRAM="testbench/riscvtest2.txt"; \
-		fi; \
-		echo "🚀 Ejecutando simulación con $$PROGRAM"; \
-		vlib $(OUT_DIR)/work || true; \
-		vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $(TB_DIR)/$(TB_TOP).sv; \
-		vsim -c -do "vcd file $(OUT_DIR)/dump_rtl.vcd; vcd add -r /*; run -all; quit -f" \
-		      -lib $(OUT_DIR)/work $(TB_TOP) +program=$$PROGRAM; \
-	elif [ "$$opt" = "2" ]; then \
-		echo "▶️ Ejecutando testbenches de módulos individuales..."; \
-		for tb in $(TB_DIR)/*_tb.sv; do \
-			tb_mod=$$(basename $$tb .sv); \
-			echo "▶️ Simulando $$tb_mod..."; \
-			vlib $(OUT_DIR)/work || true; \
-			vlog -sv -work $(OUT_DIR)/work $(SRC_DIR)/*.sv $$tb; \
-			vsim -c -do "run -all; quit -f" -lib $(OUT_DIR)/work $$tb_mod || exit $$?; \
+	if [ $$opt = "1" ]; then \
+		echo "📂 Programas disponibles:"; \
+		select file in $(wildcard testbench/*.txt); do \
+			echo "▶️ Ejecutando testbench completo con $$file"; \
+			vlog -sv -work $(LIB_DIR) $(SRC_FILES) $(RTL_TB); \
+			$(VSIM) -lib $(LIB_DIR) testbench +program=$$file; \
+			break; \
 		done; \
+	elif [ $$opt = "2" ]; then \
+		$(MAKE) sim-modules; \
 	else \
-		echo "❌ Opción no válida."; \
-		exit 1; \
+		echo "❌ Opción inválida."; \
 	fi
+
+sim-modules: $(LIB_DIR)
+	@echo "▶️ Ejecutando testbenches de módulos individuales..."
+	@for tb in $(MODULE_TB_LIST); do \
+		echo "▶️ Simulando $$tb..."; \
+		vlog -sv -work $(LIB_DIR) $(SRC_FILES) $(TB_DIR)/$$tb.sv; \
+		if [ "$$tb" = "imem_tb" ]; then \
+			$(VSIM) -lib $(LIB_DIR) $$tb +program=testbench/dummy.txt; \
+		else \
+			$(VSIM) -lib $(LIB_DIR) $$tb; \
+		fi \
+	done
 	@echo "✅ Simulación RTL finalizada."
 
-# ================================================================
-#  SÍNTESIS
-# ================================================================
-synth: $(OUT_DIR)
-	@echo "🔧 Ejecutando síntesis con Yosys..."
-	yosys -p "read_verilog -sv $(SRC_DIR)/design.sv; \
-	          synth -top $(TOP_MODULE); \
-	          dfflibmap -liberty $(LIB_FILE); \
-	          abc -liberty $(LIB_FILE); \
-	          write_verilog $(OUT_DIR)/$(TOP_MODULE)_netlist.v"
-	@echo "✅ Síntesis completada."
-
-# ================================================================
-#  SIMULACIÓN A NIVEL DE COMPUERTA (GLS)
-# ================================================================
-sim-gls: $(OUT_DIR)
-	@echo "🔧 Simulación a nivel de compuerta (GLS)..."
-	vlib $(OUT_DIR)/work || true
-	vlog -sv -work $(OUT_DIR)/work $(OUT_DIR)/$(TOP_MODULE)_netlist.v $(TB_DIR)/$(TB_TOP).sv
-	vsim -c -do "vcd file $(OUT_DIR)/dump_gls.vcd; vcd add -r /*; run -all; quit -f" \
-		-lib $(OUT_DIR)/work $(TB_TOP)
-
-# ================================================================
-#  GTKWave
-# ================================================================
-waves-rtl:
-	gtkwave $(OUT_DIR)/dump_rtl.vcd &
-
-waves-gls:
-	gtkwave $(OUT_DIR)/dump_gls.vcd &
-
-# ================================================================
-#  LIMPIEZA
-# ================================================================
-$(OUT_DIR):
-	@mkdir -p $(OUT_DIR)
-
 clean:
-	@echo "🧹 Limpiando archivos generados..."
-	rm -rf $(OUT_DIR)
-	@echo "✅ Limpieza completada."
+	@rm -rf $(BUILD_DIR)
+	@echo "🧹 Limpieza completada."
