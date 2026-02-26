@@ -12,7 +12,7 @@
 
 # 1. Descripción de hardware usando lenguajes de descripción de hardware (HDL), particularmente Verilog
 
-Un Hardware Description Language (HDL) es un lenguaje formal utilizado para modelar, describir y sintetizar hardware digital. A diferencia de los lenguajes de programación tradicionales, un HDL no describe instrucciones que se ejecutan secuencialmente, sino la estructura y el comportamiento de un circuito electrónico.
+HDL es un lenguaje utilizado principalmente para describir y sintetizar hardware digital. A diferencia de los lenguajes de programación tradicionales, un HDL no describe instrucciones que se ejecutan secuencialmente, sino la estructura y el comportamiento de un circuito electrónico.
 
 Verilog, estandarizado por el IEEE (IEEE Std 1364-2005), permite describir:
 
@@ -28,31 +28,14 @@ En una FPGA, el código Verilog se sintetiza en recursos físicos como:
 - Bloques DSP
 - Memorias internas (Block RAM)
 
-Ejemplo:
-
-```verilog
-module and2(
-    input wire a,
-    input wire b,
-    output wire y
-);
-assign y = a & b;
-endmodule
-```
-
-Este módulo describe una compuerta AND que será implementada físicamente dentro de una LUT durante el proceso de síntesis.
 
 Es importante comprender que el HDL no se ejecuta como un programa tradicional; el sintetizador traduce la descripción a hardware real.
-
-**Fuentes:**  
-IEEE Std 1364-2005 – Verilog Hardware Description Language  
-AMD/Xilinx Vivado Design Suite User Guide: Synthesis (UG901)
 
 ---
 
 # 2. Descripción de circuitos combinacionales usando bloques procedurales y asignación bloqueante
 
-Un circuito combinacional es aquel cuya salida depende únicamente de las entradas actuales, sin memoria ni reloj.
+Un circuito combinacional es aquel cuya salida depende únicamente de las entradas actuales, sin memoria o clock.
 
 Puede describirse en Verilog mediante:
 
@@ -86,9 +69,6 @@ Si no se asigna un valor en todos los caminos posibles, el sintetizador puede in
 
 La diferencia principal entre `assign` y `always` es que `assign` describe directamente una función lógica, mientras que `always` permite describir estructuras más complejas usando `if`, `case` u otras construcciones de control.
 
-**Fuentes:**  
-IEEE Std 1364-2005  
-AMD/Xilinx Vivado Design Suite User Guide: Synthesis (UG901)
 
 ---
 
@@ -115,13 +95,10 @@ Incluye:
 - Routing: interconexión de los recursos.
 
 ## 4. Generación de Bitstream
-Se genera el archivo `.bit`, que contiene la configuración necesaria para programar la FPGA.
+Se genera el archivo que seria un binario, que contiene la configuración necesaria para programar la FPGA.
 
 Este flujo transforma la descripción en HDL en una configuración física funcional.
 
-**Fuentes:**  
-AMD/Xilinx Vivado Design Suite User Guide: Synthesis (UG901)  
-AMD/Xilinx Vivado Design Suite User Guide: Implementation (UG904)
 
 ---
 
@@ -132,22 +109,13 @@ Los archivos de restricciones (.xdc en Vivado) permiten especificar cómo el dis
 Se utilizan para:
 
 - Asignar pines físicos
-- Definir estándares eléctricos (por ejemplo LVCMOS33)
+- Definir estándares eléctricos 
 - Establecer frecuencia del reloj
 - Definir restricciones de temporización (timing)
 
-Ejemplo:
-
-```tcl
-set_property PACKAGE_PIN W5 [get_ports clk]
-set_property IOSTANDARD LVCMOS33 [get_ports clk]
-create_clock -period 10.0 [get_ports clk]
-```
 
 Sin constraints, el diseño no puede interactuar correctamente con el hardware físico ni realizar análisis de temporización adecuados.
 
-**Fuente:**  
-AMD/Xilinx Vivado Design Suite User Guide: Using Constraints (UG903)
 
 ---
 
@@ -172,11 +140,6 @@ Existen dos métodos principales de configuración:
 - La FPGA se configura automáticamente al encender.
 - Permite funcionamiento autónomo sin conexión al PC.
 
-El archivo utilizado para la configuración es el bitstream (.bit).
-
-**Fuente:**  
-AMD/Xilinx 7 Series FPGAs Configuration User Guide (UG470)
-
 ---
 
 # 6. Concepto de módulo e IP Core
@@ -190,7 +153,7 @@ Un módulo es la unidad básica de diseño en Verilog. Permite:
 - Facilitar reutilización
 - Mejorar organización del diseño
 
-Por ejemplo, en una calculadora digital se puede tener un módulo principal que instancie submódulos como:
+Por ejemplo, como el laboratorio 1 que se tuvo que realizar una calculadora digital se puede tener un módulo principal que instancie submódulos como:
 
 - Sumador
 - Restador
