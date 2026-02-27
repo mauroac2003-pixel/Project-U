@@ -82,14 +82,6 @@ En nuestro proyecto se utilizaron para:
 - Asignar los LEDs al resultado `c`.
 - Conectar los segmentos y ánodos del display de 7 segmentos.
 
-Además, permiten:
-
-- Definir el estándar eléctrico (LVCMOS33).
-- Crear restricciones de temporización mediante `create_clock`.
-- Permitir análisis de timing durante la implementación.
-
-Sin constraints, el diseño no podría interactuar correctamente con el hardware físico de la tarjeta Nexys A7.
-
 ---
 
 ## 4. ¿Cómo se mide el consumo de recursos en una FPGA?
