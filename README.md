@@ -156,14 +156,3 @@ Es un diseño RTL modular compuesto por varios módulos interconectados, pero no
 
 ---
 
-# Conclusión
-
-La calculadora implementada cumple con los objetivos del laboratorio, integrando correctamente:
-
-- Lógica combinacional.
-- Lógica secuencial para multiplexado.
-- Uso adecuado de control de flujo.
-- Implementación correcta de constraints.
-- Flujo completo de diseño: HDL → Síntesis → Implementación → Bitstream.
-
-El proyecto demuestra comprensión del proceso completo de diseño digital en FPGA.
