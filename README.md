@@ -77,18 +77,23 @@ Los constraints (archivo `.xdc`) le indican al sintetizador/implementador cómo 
 
 Si están incorrectos:
 - **Pines equivocados**: los LEDs o displays no responden, o se activan señales no deseadas.
-- **Reloj mal declarado**: el análisis de timing falla o pasa con márgenes incorrectos, provocando fallos intermitentes en hardware real aunque la simulación sea correcta.
+- **Reloj mal declarado**: el análisis de timing falla o pasa con márgenes incorrectos.
 - **Ausencia de constraint de reloj**: la herramienta no puede verificar si se cumplen los tiempos de setup/hold, lo que puede resultar en metaestabilidad o comportamiento impredecible.
 
 ---
 
 ### 7. Recursos principales consumidos
 
-| Recurso | Módulo dominante |
-|---------|-----------------|
-| **LUTs** | `seg7mux` (decodificador + lógica combinacional del mux) |
-| **Flip-Flops (FFs)** | `divclock` (contador de 32 bits) y `dcount` (contador de 5 bits + registro de estado) |
-| **BRAM** | No se utiliza |
-| **DSP** | No se utiliza |
+Los siguientes datos fueron obtenidos directamente del reporte **Report Utilization** en Vivado tras correr Implementation (disponible sin necesidad de conectar la FPGA):
 
-El bloque que domina el uso de recursos es **`divclock`**, principalmente por su contador de 32 bits que requiere 32 flip-flops y la lógica de comparación asociada (LUTs). El decodificador de 7 segmentos también contribuye con LUTs por su tabla de verdad de 10 entradas, pero en menor medida. En general, el diseño es de bajo consumo de recursos dado su naturaleza de control simple.
+| Módulo | Slice LUTs (/ 63400) | Slice Registers (/ 126800) | Slices (/ 15850) |
+|--------|---------------------|---------------------------|-----------------|
+| **top (total)** | 25 | 51 | 22 |
+| `u_count` (dcount) | 11 | 4 | 4 |
+| `u_div` (divclock) | 8 | 27 | 13 |
+| `u_fsm` (FSM) | 1 | 3 | 2 |
+| `u_seg` (seg7mux) | 5 | 17 | 8 |
+
+No se utilizan recursos de **BRAM** ni **DSP**.
+
+El módulo que domina el uso de **Slice Registers (FFs)** es `divclock` con 27 registros, debido a su contador de 32 bits para la división de reloj. En cuanto a **LUTs**, `dcount` consume la mayor cantidad (11) por la lógica de decremento y comparación del contador. En general, el diseño es extremadamente liviano: usa menos del 0.1% de los recursos disponibles en la Nexys A7.
