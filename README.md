@@ -1,4 +1,4 @@
-# Laboratorio 2 — Semáforo Vehicular en FPGA
+# Laboratorio 3 
 ## Taller de Diseño Digital – EL3313  
 
 **Estudiantes:**  
@@ -14,86 +14,125 @@ I Semestre 2026
 
 ---
 
+## Actividad 1: Testbench
+
+**1. ¿Cómo se genera la señal del reloj?**
+
+
+
+**2. ¿Cómo se generan los retrasos entre cambios?**
+
+
+**3. ¿Cómo se introducen entradas y se extraen las salidas?**
+
+
+
+**4. ¿Cómo se puede imprimir información tan pronto como las señales cambian?**
+
+
+
+---
+
+## Actividad 2: Circuito Anti-rebote
+
+**1. Presione el botón múltiples veces. ¿La cuenta coincide con el número de veces que presionó?**
+
+La cuenta no coincide con el numero de veces, un pulso mecánico en el botón está siendo interpretado de manera diferente por el contador de pulsos, a veces da un numero exagerado y la cuenta no coincide. 
+
+**2. ¿Cuál es el fenómeno que causa lo anterior?**
+
+El fenómeno presentado se conoce como rebote (bounce). 
+
+**3. Explique con sus propias palabras qué es rebote.**
+
+Es un fenómeno mecánico debido a la construcción de los botones, sucede cuando se presiona el botón y el contacto interno que indica si el botón esta abierto o cerrado se abre y cierra varias veces muy rápido, dando como resultados pulsaciones falsas.  
+
+**¿Por qué es necesario contar con todos los módulos del anti-rebote?**
+
+Los tres módulos extra funcionan debido a que en conjunto combaten los problemas presentados por la mecánica del botón.
+
+El modulo  button_sync pasa a ser el primer modulo por el cual pasa la señal de pulse cuando se presiona el botón, lee esa señal por ejemplo como 101010111 y ayuda a sincronizar la señal del botón con el reloj de la FPGA y que cambie solo con el clk.
+
+El modulo debounce toma la señal del modulo button_sync y la escanea por decir un termino sencillo y si la señal cambia mucho entonces no se toma en cuenta, si la señal permanece estable por un tiempo considerable entonces lo toma como una señal correcta. 
+
+El edge_detector toma la señal limpia y hace que solo se tome en cuenta cuando se detecte el flanco de subida, ademas de que calcula la señal de salida mediante la operación AND, haciendo pulse_out =  valor de entrada AND ~ valor de entrada, una vez que esa operación da 1, entonces pulse toma el valor de pulse_out.
+
+---
+
+## Actividad 3: Circuitos de Reset
+
+**1. ¿Qué sucede cuando uno aplica un rst?**
+
+En el ripple counter con reset síncrono, al aplicar rst se observa que los dos contadores no se resetean al mismo tiempo. El counter0 se resetea en el siguiente flanco negativo del reloj principal, pero el counter1 no se resetea hasta el siguiente flanco negativo de count0[3], que es una señal derivada y más lenta. Esto se vio claramente en la simulación donde al aplicar rst en t=530000, counter0 pasó a 0000 inmediatamente pero counter1 se quedó en 0011 y siguió incrementando durante varios ciclos más antes de resetearse. En hardware esto se traduce en LEDs mostrando valores inconsistentes por un instante al momento del reset.
+
+**2. ¿Cómo puede solucionarse el problema?**
+
+La solución es usar reset asíncrono combinado con un sincronizador de doble flip-flop. El reset asíncrono garantiza que ambos contadores se reseteen instantáneamente sin depender de ningún flanco de reloj, resolviendo el problema de los distintos dominios de reloj del ripple counter. El sincronizador de doble FF se encarga de que la liberación del reset ocurra de forma sincronizada con el reloj principal, evitando metaestabilidad. Esto se verificó tanto en simulación como en la FPGA, donde al subir SW0 todos los LEDs se apagaron al mismo tiempo.
+
+**¿Por qué no es conveniente tener una señal de reset asíncrona en FPGAs?**
+
+Un reset asíncrono puro presenta varios problemas en FPGAs. Primero, cuando el reset se libera puede hacerlo cerca de un flanco activo del reloj, dejando algún flip-flop en estado indeterminado por metaestabilidad. Segundo, en un diseño grande la señal de reset no llega a todos los flip-flops al mismo tiempo debido a retardos de ruteo, dejando el sistema en un estado parcialmente reseteado por un instante. Tercero, las herramientas como Vivado tienen dificultades para analizar el timing de señales asíncronas, lo que puede producir errores que no se detectan en simulación pero sí aparecen en hardware.
+
+**Recomendaciones principales para señales de reset en FPGA:**
+
+- Preferir reset síncrono siempre que sea posible ya que las herramientas lo optimizan mejor.
+- Si se necesita reset asíncrono, usar siempre el patrón async assert, sync deassert con sincronizador de doble FF.
+- Usar una sola fuente de reset distribuida globalmente para que llegue a todos los flip-flops con el menor retardo posible.
+- No resetear flip-flops que no lo necesiten, ya que el reset consume recursos de ruteo adicionales.
+- Evitar generar resets internamente desde lógica combinacional porque pueden producir pulsos espurios por glitches.
+
+---
+
 ## Preguntas de Seguimiento de Aprendizaje
 
-### 1. FSM de Moore vs. Mealy — ¿Cuál se implementó?
+**1. ¿Cuál es el propósito de un testbench en el proceso de diseño digital? Explique brevemente su función dentro del flujo de verificación.**
 
-Una FSM de **Moore** genera sus salidas únicamente en función del **estado actual**, sin importar las entradas. Una FSM de **Mealy** genera sus salidas en función del **estado actual y las entradas** simultáneamente.
 
-En este diseño se implementó una FSM **híbrida con predominio Moore**: las salidas de los LEDs (`led_r`, `led_v`, `led_a`) dependen únicamente del estado actual, lo que es comportamiento Moore. Sin embargo, las señales `load` y `load_value` se activan combinacionalmente cuando `zero` es verdadero dentro del bloque de salidas, lo cual introduce una dependencia de entrada característica de Mealy.
 
-Se optó por este enfoque porque el semáforo es un sistema orientado a estados (cada luz corresponde a un estado), lo que se modela naturalmente con Moore, y las señales de carga se derivan de la condición de transición para mayor simplicidad.
+**2. En el experimento inicial, ¿qué comportamiento se observa cuando un botón se conecta directamente al contador sin un circuito anti-rebote?**
 
----
+_(responder)_
 
-### 2. ¿Por qué usar un tick de 1 Hz en lugar del reloj principal?
+**3. ¿Qué fenómeno físico causa el rebote en los pulsadores mecánicos y cómo afecta el comportamiento del sistema digital?**
 
-El reloj principal de la FPGA corre a **100 MHz**. Usar ese reloj directamente para temporizar segundos requeriría contadores de 100 millones de ciclos en cada módulo, lo que complica el diseño, consume más recursos y hace el código difícil de mantener.
+_(responder)_
 
-En este diseño, el módulo `divclock` genera un reloj de **1 Hz** (configurado con `TICKS = 50_000_000`, lo que produce un toggle cada 0.5 s, resultando en un período de 1 s). Así, la FSM y el contador `dcount` operan directamente con `clk_1s`, simplificando la lógica de temporización a un simple decremento por ciclo de reloj.
+**4. ¿Cuál es la función del sincronizador de entrada antes del circuito anti-rebote?**
 
----
+_(responder)_
 
-### 3. ¿Cómo se garantiza la sincronía entre el contador y la FSM?
+**5. Explique el principio de funcionamiento del circuito anti-rebote implementado en este laboratorio.**
 
-Ambos módulos, `FSM` y `dcount`, están conectados al **mismo reloj** (`clk_1s`) y comparten las señales `zero`, `load` y `load_value`. En cada flanco positivo de `clk_1s`:
+_(responder)_
 
-- `dcount` decrementa su valor o carga uno nuevo.
-- `FSM` evalúa `zero` y transita de estado si corresponde.
+**6. ¿Cómo influye el valor del parámetro que define el tiempo de filtrado en el funcionamiento del anti-rebote?**
 
-Dado que ambos registros se actualizan en el **mismo flanco de reloj**, el cambio de estado y la recarga del contador ocurren de forma simultánea y síncrona, sin riesgo de condiciones de carrera entre módulos.
+_(responder)_
 
----
+**7. Compare el comportamiento del contador utilizando reset síncrono y reset asíncrono. ¿Cuál es la diferencia principal observada en simulación?**
 
-### 4. Multiplexado de 7 segmentos
+En la simulación se observó claramente la diferencia al aplicar rst en t=530000. Con reset síncrono, counter0 se resetea a 0000 de inmediato pero counter1 se quedó en 0011 y continuó incrementando hasta 0100, 0101 y siguientes durante varios ciclos antes de resetearse, dejando el sistema en un estado inconsistente. Con reset asíncrono, ambos contadores pasaron a 0000 exactamente en el mismo instante sin importar en qué punto del ciclo de reloj se encontraban. La diferencia principal es que el reset síncrono depende del flanco del reloj de cada contador para actuar, y como en un ripple counter cada contador tiene su propio dominio de reloj, el reset no ocurre simultáneamente en todos. El reset asíncrono no tiene esa limitación.
 
-**¿Por qué se comparten segmentos y se activan ánodos por turno?**  
-Los displays comparten las líneas de segmentos (`a–g, dp`) para reducir el número de pines necesarios en la FPGA. Como cada display tiene su propio ánodo, se activan de uno en uno en secuencia rápida. El ojo humano percibe el conjunto como una imagen continua gracias a la persistencia visual.
+**8. Mencione al menos dos ventajas y dos desventajas del reset síncrono.**
 
-**¿Qué problemas aparecen con frecuencia de multiplexación incorrecta?**  
-- Si es **muy baja** (< ~50 Hz): parpadeo visible, el ojo distingue el encendido y apagado de cada display.  
-- Si es **muy alta**: el tiempo de encendido por display es tan corto que el brillo percibido disminuye notablemente, los dígitos se ven tenues o ilegibles.
+Ventajas:
+- Es predecible y fácil de analizar por las herramientas EDA como Vivado, lo que facilita el timing  del diseño.
+- Elimina el riesgo de metaestabilidad porque el reset y su liberación siempre ocurren en el flanco del reloj.
 
-En este diseño, `seg7mux` usa un contador de 16 bits (`refresh_cnt`) corriendo a 100 MHz. El selector cambia cada 2¹⁶ = 65,536 ciclos, lo que da una frecuencia de multiplexación de aproximadamente **763 Hz**, bien por encima del umbral de parpadeo.
+Desventajas:
+- Requiere que el reloj esté activo para que el reset tenga efecto, lo que puede ser un problema si el reloj falla.
+- En diseños con múltiples dominios de reloj como el ripple counter, el reset no ocurre simultáneamente en todos los módulos, generando estados inconsistentes.
 
----
+**9. Mencione al menos dos ventajas y dos desventajas del reset asíncrono.**
 
-### 5. Implementación del decodificador BCD a 7 segmentos
+Ventajas:
+- Actúa de forma inmediata sin depender del reloj, lo que es útil cuando se necesita detener el sistema instantáneamente.
+- Puede resetear el sistema aunque el reloj esté detenido o funcionando mal.
 
-El decodificador se implementó dentro del módulo `seg7mux` mediante un bloque `always @(*)` con una sentencia `case` que mapea cada dígito decimal (0–9) a su patrón de 8 bits correspondiente para los segmentos.
+Desventajas:
+- La liberación del reset puede ocurrir cerca de un flanco activo del reloj y causar metaestabilidad en los flip-flops.
+- En diseños grandes con muchos flip-flops, la señal de reset no llega a todos al mismo tiempo por los retardos de ruteo, dejando el sistema parcialmente reseteado por un instante.
 
-Se usó la convención **activo bajo**: un bit en `0` enciende el segmento correspondiente, y un bit en `1` lo apaga. Por ejemplo:
+**10. Con base en los resultados obtenidos, ¿qué tipo de reset considera más apropiado para sistemas digitales síncronos y por qué?**
 
-- `4'd0 → 8'b11000000` (segmentos a,b,c,d,e,f encendidos; g apagado)
-- `4'd1 → 8'b11111001` (solo segmentos b,c encendidos)
-
-La verificación se realizó comprobando en la Nexys A7 que los dígitos mostrados coincidieran con el tiempo restante esperado para cada estado del semáforo.
-
----
-
-### 6. ¿Para qué sirven los constraints y qué fallas ocurren si están incorrectos?
-
-Los constraints (archivo `.xdc`) le indican al sintetizador/implementador cómo mapear las señales del diseño a **pines físicos** de la FPGA y definen la **frecuencia del reloj** para análisis de timing.
-
-Si están incorrectos:
-- **Pines equivocados**: los LEDs o displays no responden, o se activan señales no deseadas.
-- **Reloj mal declarado**: el análisis de timing falla o pasa con márgenes incorrectos.
-- **Ausencia de constraint de reloj**: la herramienta no puede verificar si se cumplen los tiempos de setup/hold, lo que puede resultar en metaestabilidad o comportamiento impredecible.
-
----
-
-### 7. Recursos principales consumidos
-
-Los siguientes datos fueron obtenidos directamente del reporte **Report Utilization** en Vivado tras correr Implementation (disponible sin necesidad de conectar la FPGA):
-
-| Módulo | Slice LUTs (/ 63400) | Slice Registers (/ 126800) | Slices (/ 15850) |
-|--------|---------------------|---------------------------|-----------------|
-| **top (total)** | 25 | 51 | 22 |
-| `u_count` (dcount) | 11 | 4 | 4 |
-| `u_div` (divclock) | 8 | 27 | 13 |
-| `u_fsm` (FSM) | 1 | 3 | 2 |
-| `u_seg` (seg7mux) | 5 | 17 | 8 |
-
-No se utilizan recursos de **BRAM** ni **DSP**.
-
-El módulo que domina el uso de **Slice Registers (FFs)** es `divclock` con 27 registros, debido a su contador de 32 bits para la división de reloj. En cuanto a **LUTs**, `dcount` consume la mayor cantidad (11) por la lógica de decremento y comparación del contador. En general, el diseño es extremadamente liviano: usa menos del 0.1% de los recursos disponibles en la Nexys A7.
+Con base en los resultados obtenidos, el reset más apropiado para sistemas digitales síncronos es el patrón combinado de reset asíncrono con sincronizador de doble FF, que es exactamente lo que se implementó en este laboratorio. Este enfoque toma lo mejor de ambos tipos: la activación del reset es asíncrona, lo que garantiza que todos los módulos respondan de forma inmediata sin importar su dominio de reloj, resolviendo el problema observado con el reset síncrono en el ripple counter. La liberación del reset pasa por el sincronizador de doble FF, lo que elimina el riesgo de metaestabilidad al salir del estado de reset. Esto se verificó tanto en simulación como en la FPGA, donde al subir SW0 todos los LEDs se apagaron simultáneamente y al bajarlo el conteo retomó desde cero de forma limpia y predecible.
