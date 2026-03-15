@@ -24,7 +24,8 @@ always #5 clk = ~clk;
 
 **2. ¿Cómo se generan los retrasos entre cambios?**
 
-Los retrasos se generar utilizando el operador "#" junto al tiempo de retraso y la variable a retrasar, junto con el estado al estado al cual se quiere cambiar la variable luego del retraso 
+Los retrasos se generar utilizando el operador "#" junto al tiempo de retraso y la variable a retrasar, junto con el estado al estado al cual se quiere cambiar la variable luego del retraso.
+
 Ejemplo: #12 pulse = 1;
 
 **3. ¿Cómo se introducen entradas y se extraen las salidas?**
