@@ -30,7 +30,7 @@ Ejemplo: #12 pulse = 1;
 
 **3. ¿Cómo se introducen entradas y se extraen las salidas?**
 
-Las entradas en el DUT (Device Under Test) son controladas mediante variables "reg" en el testbrench, estas variables de entrada corresponden a "clk", "rst" y "pulse".
+Las entradas en el DUT (Device Under Test) son controladas mediante variables "reg" en el testbench, estas variables de entrada corresponden a "clk", "rst" y "pulse".
 Las salidas son controladas mediante señales "wire" tales como la señal "count".
 
 **4. ¿Cómo se puede imprimir información tan pronto como las señales cambian?**
