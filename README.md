@@ -18,18 +18,25 @@ I Semestre 2026
 
 **1. ¿Cómo se genera la señal del reloj?**
 
+La señal de reloj se genera a partir del bloque de código que se muestra a continuación:
 
+always #5 clk = ~clk;
 
 **2. ¿Cómo se generan los retrasos entre cambios?**
 
+Los retrasos se generar utilizando el operador "#" junto al tiempo de retraso y la variable a retrasar, junto con el estado al estado al cual se quiere cambiar la variable luego del retraso 
+Ejemplo: #12 pulse = 1;
 
 **3. ¿Cómo se introducen entradas y se extraen las salidas?**
 
-
+Las entradas en el DUT (Device Under Test) son controladas mediante variables "reg" en el testbrench, estas variables de entrada corresponden a "clk", "rst" y "pulse".
+Las salidas son controladas mediante señales "wire" tales como la señal "count".
 
 **4. ¿Cómo se puede imprimir información tan pronto como las señales cambian?**
 
-
+Para imprimir información en tiempo real se utiliza la función "$monitor", esta imprime las señales cada vez que cambian.
+En el código se implementó de la siguiente manera: 
+"$monitor("time=%0t rst=%b pulse=%b count=%d", $time, rst, pulse, count);"
 
 ---
 
@@ -47,7 +54,7 @@ El fenómeno presentado se conoce como rebote (bounce).
 
 Es un fenómeno mecánico debido a la construcción de los botones, sucede cuando se presiona el botón y el contacto interno que indica si el botón esta abierto o cerrado se abre y cierra varias veces muy rápido, dando como resultados pulsaciones falsas.  
 
-**¿Por qué es necesario contar con todos los módulos del anti-rebote?**
+**4. ¿Por qué es necesario contar con todos los módulos del anti-rebote?**
 
 Los tres módulos extra funcionan debido a que en conjunto combaten los problemas presentados por la mecánica del botón.
 
@@ -95,19 +102,19 @@ _(responder)_
 
 **3. ¿Qué fenómeno físico causa el rebote en los pulsadores mecánicos y cómo afecta el comportamiento del sistema digital?**
 
-_(responder)_
+El fenómeno causado es debido a las vibraciones mecánicas del botón cuando es pulsado, por lo cual el sistema digital va detectar esas pequeñas vibraciones y las va interpretar como pulsaciones. 
 
 **4. ¿Cuál es la función del sincronizador de entrada antes del circuito anti-rebote?**
 
-_(responder)_
+La función es la de estabilizar la señal de entrada y sincronizarla con el reloj de la FPGA.
 
 **5. Explique el principio de funcionamiento del circuito anti-rebote implementado en este laboratorio.**
 
-_(responder)_
+El principio de funcionamiento es tomar la señal de entrada, estabilizarla y sincronizarla con la señal de la FPGA, escanear esa señal para determinar si se mantiene estable por un cierto y si se cumple entonces es valida, si la señal cambia mucho de valor se reinicia el contador, luego esa señal es la entrada al modulo en el cual se genera una señal por ciclo de reloj el cual es usado para enviarla al modulo del contador de pulsos y se usa para contar cuantas veces se presiona el botón. 
 
 **6. ¿Cómo influye el valor del parámetro que define el tiempo de filtrado en el funcionamiento del anti-rebote?**
 
-_(responder)_
+Ese parámetro influye en el tiempo que se usa para determinar que la señal se considera estable, se conoce como tiempo de filtrado = parámetro/frecuencia de FPGA, por lo cual si el parámetro es muy largo hay pulsaciones que no se tomaran en cuenta y si es muy pequeño se tomaran en cuenta muchas pulsaciones.
 
 **7. Compare el comportamiento del contador utilizando reset síncrono y reset asíncrono. ¿Cuál es la diferencia principal observada en simulación?**
 
@@ -135,4 +142,4 @@ Desventajas:
 
 **10. Con base en los resultados obtenidos, ¿qué tipo de reset considera más apropiado para sistemas digitales síncronos y por qué?**
 
-Con base en los resultados obtenidos, el reset más apropiado para sistemas digitales síncronos es el patrón combinado de reset asíncrono con sincronizador de doble FF, que es exactamente lo que se implementó en este laboratorio. Este enfoque toma lo mejor de ambos tipos: la activación del reset es asíncrona, lo que garantiza que todos los módulos respondan de forma inmediata sin importar su dominio de reloj, resolviendo el problema observado con el reset síncrono en el ripple counter. La liberación del reset pasa por el sincronizador de doble FF, lo que elimina el riesgo de metaestabilidad al salir del estado de reset. Esto se verificó tanto en simulación como en la FPGA, donde al subir SW0 todos los LEDs se apagaron simultáneamente y al bajarlo el conteo retomó desde cero de forma limpia y predecible.
+Con base en los resultados obtenidos, el reset más apropiado para sistemas digitales síncronos es el patrón combinado de reset asíncrono con sincronizador de doble FF, que es exactamente lo que se implementó en este laboratorio. Este enfoque toma lo mejor de ambos tipos: la activación del reset es asíncrona, lo que garantiza que todos los módulos respondan de forma inmediata sin importar su dominio de reloj, resolviendo el problema observado con el reset síncrono en el ripple counter. La liberación del reset pasa por el sincronizador de doble FF, lo que elimina el riesgo de metaestabilidad al salir del estado de reset. Esto se verificó tanto en simulación como en la FPGA, donde al subir interrupor J15 todos los LEDs se apagaron simultáneamente y al bajarlo el conteo retomó desde cero de forma limpia y predecible.
