@@ -95,11 +95,11 @@ Un reset asíncrono puro presenta varios problemas en FPGAs. Primero, cuando el 
 
 **1. ¿Cuál es el propósito de un testbench en el proceso de diseño digital? Explique brevemente su función dentro del flujo de verificación.**
 
-
+Un testbench es un módulo de simulación, el cual se utiliza para verificar el funcionamiento de un diseño digital antes de su implementación en hardware. Su propósito es observar las salidas del circuito y su comportamiento ante diferentes entradas o señales generadas, como por ejemplo un "clock". Mediante este análisis se logra detectar posibles errores durante la simulación y validar el diseño del circuito antes de implementarlo de manera física.
 
 **2. En el experimento inicial, ¿qué comportamiento se observa cuando un botón se conecta directamente al contador sin un circuito anti-rebote?**
 
-_(responder)_
+Al presionar el botón varias veces, el contador muestra un valor mayor al número real de pulsaciones. Por ejemplo, si se presiona el botón 5 veces, el contador puede mostrar 8, 12 o cualquier valor superior. Esto ocurre porque cada vez que se presiona el botón físicamente, los contactos metálicos no establecen una conexión limpia de inmediato sino que rebotan varias veces en milisegundos, generando múltiples flancos que el contador interpreta como pulsaciones independientes. El comportamiento es impredecible ya que la cantidad de rebotes varía en cada pulsación dependiendo de la velocidad y fuerza con que se presione el botón.
 
 **3. ¿Qué fenómeno físico causa el rebote en los pulsadores mecánicos y cómo afecta el comportamiento del sistema digital?**
 
