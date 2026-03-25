@@ -22,6 +22,14 @@ La arquitectura uniciclo es completamente combinacional, por lo tanto no requier
 
 ---
 
+---
+
+## Diagrama RTL 
+<img width="968" height="427" alt="uniciclo_RTL" src="https://github.com/user-attachments/assets/8d6b271f-dc0b-4f44-a91a-3c9644ecb4f4" />
+
+
+---
+
 ## Actividad 2: Arquitectura Segmentada
 
 **2. Latencia de la arquitectura segmentada**
