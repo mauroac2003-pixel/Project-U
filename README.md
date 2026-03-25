@@ -110,7 +110,6 @@ La arquitectura multiciclo opera a una frecuencia máxima de ≈ 108.4 MHz
 | Retraso crítico |2.682 ns|9.226 ns|8.096 ns|
 | Frecuencia máxima |372.9 MHz|108.4 MHz|123.5 MHz|
 
-> Nota: completar con los valores obtenidos en Vivado tras síntesis e implementación.
 
 ---
 
