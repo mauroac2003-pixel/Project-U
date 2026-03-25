@@ -125,11 +125,13 @@ La arquitectura multiciclo es la que menor cantidad de recursos consume porque r
 
 La elección de microarquitectura depende directamente del contexto de aplicación:
 
-- **Bajo consumo de potencia y alta duración de batería** (por ejemplo, sensores IoT o dispositivos médicos portátiles como marcapasos o monitores de glucosa): se debe preferir la arquitectura **multiciclo**, ya que al reutilizar las unidades aritméticas solo activa una pequeña parte del hardware en cada ciclo, reduciendo la actividad de conmutación y por ende el consumo dinámico de potencia. El mayor tiempo de cómputo es aceptable si la frecuencia de operación es baja.
+Casos como: bajo consumo de potencia con alta duración de batería, computación y medicina.
 
-- **Computación de alto rendimiento** (por ejemplo, aceleradores de IA, procesamiento de señales en tiempo real o simulaciones científicas): se debe preferir la arquitectura **segmentada**, ya que permite procesar múltiples operaciones en paralelo aprovechando el pipeline y opera a la mayor frecuencia posible. El throughput es significativamente mayor al uniciclo y multiciclo una vez que el pipeline está lleno.
+La arquitectura uniciclo es recomendada para diseños simples que no requieran de gran capacidad de manejo de instrucciones. 
 
-- **Medicina con restricciones de latencia determinista** (por ejemplo, sistemas de respuesta en tiempo real como desfibriladores o robots quirúrgicos): puede preferirse la arquitectura **uniciclo** porque su latencia es predecible y mínima en términos de ciclos, siendo adecuada cuando se necesita una respuesta inmediata y el diseño no es crítico en frecuencia.
+La multiciclo al ser la mas eficiente y pequeña es implementada en la industria medica en dispositivos medicos portatiles, estos son de bajo consumo energetico.
+
+El Pipeline es el mas grande y mas potente, se usa cuando se quiere el maximo rendimiento, ejecuta mas instrucciones por segundo, es usado en procesadores de computadora por ejemplo. 
 
 ---
 
@@ -145,6 +147,4 @@ Además, el banco de registros de un procesador está integrado con la etapa de 
 
 **5. ¿Cuál microarquitectura ofrece el mejor balance entre rendimiento y consumo de recursos?**
 
-La arquitectura **segmentada** ofrece el mejor balance entre rendimiento y consumo de recursos. Si bien consume más recursos que la multiciclo por los registros de pipeline adicionales, su frecuencia máxima de operación es considerablemente mayor que la uniciclo, ya que el camino crítico se reduce al dividir la operación en etapas. Esto se traduce en un throughput alto: aunque la latencia de la primera operación es de 3 ciclos, a partir de ese punto produce un resultado nuevo cada ciclo de reloj cuando se alimentan operaciones continuas.
-
-La arquitectura uniciclo tiene la menor latencia por operación individual pero su camino crítico limita fuertemente la frecuencia máxima. La multiciclo economiza recursos pero sacrifica significativamente el rendimiento al requerir 8 ciclos por operación. La segmentada es el punto medio que aprovecha el paralelismo temporal del pipeline sin duplicar el hardware, que es exactamente el mismo argumento por el que la mayoría de procesadores modernos, incluyendo implementaciones de RISC-V, utilizan esta microarquitectura como base.
+El Pipeline es el que ofrece mayor rendimiento, el Multiciclo es el mas eficiente, y el uniciclo ofrece algo de ambas, es rápido y no consume tanto como el Pipeline, pero solo ejecuta instruccion por instruccion. Lo mejor seria usar un Pipeline pero de cinco etapas ya que cuando son demasiado extendidos se vuelven enormes.
