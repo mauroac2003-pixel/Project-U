@@ -47,6 +47,29 @@ La arquitectura uniciclo es completamente combinacional, por lo tanto no requier
 
 La arquitectura segmentada introduce 3 etapas de pipeline mediante registros síncronos. Por lo tanto, la latencia es de 3 ciclos de reloj desde que se aplican las entradas hasta que el resultado correcto aparece en `dot`. Esto se verificó en la simulación observando que el valor correcto aparece en el tercer flanco de subida del reloj después de establecer las entradas.
 
+
+## Diagrama de tiempos
+<img width="1055" height="456" alt="wave_segmentada" src="https://github.com/user-attachments/assets/55ef0fea-0a68-4baa-bba1-6d4c906d7eba" />
+
+
+
+## Diagrama RTL 
+<img width="984" height="422" alt="segmentada_RTL" src="https://github.com/user-attachments/assets/16c7f4a5-97b6-43c8-a3ca-d4c8b4c9c0c4" />
+
+
+## Report Power
+<img width="677" height="377" alt="segmentada_power" src="https://github.com/user-attachments/assets/8388ff2d-e936-45da-97ec-697ae0d14a8a" />
+
+
+## Timing
+<img width="869" height="204" alt="segmentada_timing" src="https://github.com/user-attachments/assets/7ac93cd0-5ace-48b2-9213-174daa8442b6" />
+
+** Frecuencia maxima **
+
+  Para el uniciclo hay un detalle importante y es un circuito puramente combinacional, por tanto no tiene reloj. 
+
+
+
 ---
 
 ## Actividad 3: Arquitectura Multiciclo
@@ -63,10 +86,10 @@ La arquitectura multiciclo procesa un elemento del vector por ciclo de reloj. Pa
 
 | Reporte | Uniciclo | Multiciclo | Segmentado |
 |---|---|---|---|
-| Consumo CLBs (%) |1| | |
-| Consumo DSPs (%) |0| | |
-| Retraso crítico |2.682 ns| | |
-| Frecuencia máxima |372.9 MHz| | |
+| Consumo CLBs (%) |1| |1|
+| Consumo DSPs (%) |0| |0|
+| Retraso crítico |2.682 ns||8.096 ns|
+| Frecuencia máxima |372.9 MHz| |123.5 MHz|
 
 > Nota: completar con los valores obtenidos en Vivado tras síntesis e implementación.
 
