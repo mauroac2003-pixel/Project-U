@@ -77,6 +77,26 @@ La arquitectura segmentada opera a una frecuencia máxima de ≈ 123.5 MHz
 
 La arquitectura multiciclo procesa un elemento del vector por ciclo de reloj. Para n=8 elementos, la latencia es de 8 ciclos de reloj desde que se activa `start=1` hasta que `done=1` y el resultado está disponible en `dot`. Esto se verificó en la simulación contando los flancos de reloj entre la activación de `start` y la señal `done`.
 
+
+## Diagrama de tiempos
+<img width="1054" height="471" alt="wave_multiciclo" src="https://github.com/user-attachments/assets/e9c3abc4-a757-46fc-af8f-5bbfaece4339" />
+
+
+## Diagrama RTL 
+<img width="1059" height="490" alt="multiciclo_RTL" src="https://github.com/user-attachments/assets/15fa05d8-237f-4696-b26a-e6c3537b9787" />
+
+
+## Report Power
+<img width="729" height="445" alt="multiciclo_power" src="https://github.com/user-attachments/assets/faa1d1a2-dcf3-4104-a36e-50cf6560aa2f" />
+
+
+## Timing
+<img width="854" height="207" alt="multiciclo_timing" src="https://github.com/user-attachments/assets/a103d59f-cb1f-4c29-a31b-c837d1214d91" />
+
+** Frecuencia maxima **
+
+La arquitectura multiciclo opera a una frecuencia máxima de ≈ 108.4 MHz
+
 ---
 
 ## Actividad 4: Preguntas de Seguimiento del Aprendizaje
@@ -85,10 +105,10 @@ La arquitectura multiciclo procesa un elemento del vector por ciclo de reloj. Pa
 
 | Reporte | Uniciclo | Multiciclo | Segmentado |
 |---|---|---|---|
-| Consumo CLBs (%) |1| |1|
-| Consumo DSPs (%) |0| |0|
-| Retraso crítico |2.682 ns||8.096 ns|
-| Frecuencia máxima |372.9 MHz| |123.5 MHz|
+| Consumo CLBs (%) |1|1|1|
+| Consumo DSPs (%) |0|0|0|
+| Retraso crítico |2.682 ns|9.226 ns|8.096 ns|
+| Frecuencia máxima |372.9 MHz|108.4 MHz|123.5 MHz|
 
 > Nota: completar con los valores obtenidos en Vivado tras síntesis e implementación.
 
