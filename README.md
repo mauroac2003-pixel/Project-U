@@ -35,6 +35,9 @@ La arquitectura uniciclo es completamente combinacional, por lo tanto no requier
 ## Timing
 <img width="862" height="247" alt="uniciclo_Timing" src="https://github.com/user-attachments/assets/7fba06df-f766-4be1-892d-079bc2633f6b" />
 
+## Frecuencia maxima 
+
+Para el uniciclo hay un detalle importante y es un circuito puramente combinacional, no tiene reloj.
 ---
 
 ## Actividad 2: Arquitectura Segmentada
