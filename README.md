@@ -137,14 +137,12 @@ El Pipeline es el mas grande y mas potente, se usa cuando se quiere el maximo re
 
 **4. ¿Qué tanto difiere el banco de registros implementado del banco de registros de un procesador?**
 
-El banco de registros implementado en este laboratorio es funcional pero simplificado en comparación con el de un procesador real. Las diferencias principales son las siguientes:
-
-En este laboratorio el banco tiene dos vectores separados (X e Y) de 8 elementos de 8 bits cada uno, con escritura secuencial controlada por switches. En un procesador como RISC-V, el banco de registros tiene 32 registros de propósito general de 32 o 64 bits, con dos puertos de lectura simultánea y un puerto de escritura, todos accesibles en el mismo ciclo de reloj mediante las direcciones rs1, rs2 y rd decodificadas de la instrucción.
-
-Además, el banco de registros de un procesador está integrado con la etapa de decodificación y el forwarding para resolver hazards de datos, lo cual no aplica en esta implementación. En esencia, este banco cumple la misma función conceptual de almacenar operandos para la unidad aritmética, pero carece de los mecanismos de acceso simultáneo y control que requiere un procesador completo.
+En el banco de registros creado se estan sacando todos los valores de los registros de una sola vez, además solo se permite escribir pero no leer, no se contemplan problemas de escritura y lectura como en los procesadores que implementan unidad de riesgo para evitar ese tipo de problemas, se contemplan dos bancos de registros el x e y, en un procesador todo esta en un mismo banco. 
 
 ---
 
 **5. ¿Cuál microarquitectura ofrece el mejor balance entre rendimiento y consumo de recursos?**
 
 El Pipeline es el que ofrece mayor rendimiento, el Multiciclo es el mas eficiente, y el uniciclo ofrece algo de ambas, es rápido y no consume tanto como el Pipeline, pero solo ejecuta instruccion por instruccion. Lo mejor seria usar un Pipeline pero de cinco etapas ya que cuando son demasiado extendidos se vuelven enormes.
+
+---
