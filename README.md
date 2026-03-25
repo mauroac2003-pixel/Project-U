@@ -28,6 +28,13 @@ La arquitectura uniciclo es completamente combinacional, por lo tanto no requier
 <img width="968" height="427" alt="uniciclo_RTL" src="https://github.com/user-attachments/assets/8d6b271f-dc0b-4f44-a91a-3c9644ecb4f4" />
 
 
+## Report Power
+<img width="667" height="425" alt="uniciclo_power" src="https://github.com/user-attachments/assets/1bc47bd9-bc5b-4c80-9cbc-88e519ab8e50" />
+
+
+## Timing
+<img width="862" height="247" alt="uniciclo_Timing" src="https://github.com/user-attachments/assets/7fba06df-f766-4be1-892d-079bc2633f6b" />
+
 ---
 
 ## Actividad 2: Arquitectura Segmentada
