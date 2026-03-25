@@ -25,7 +25,7 @@ La arquitectura uniciclo es completamente combinacional, por lo tanto no requier
 
 
 ## Diagrama RTL 
-<img width="968" height="427" alt="uniciclo_RTL" src="https://github.com/user-attachments/assets/8d6b271f-dc0b-4f44-a91a-3c9644ecb4f4" />
+<img width="968" height="427" alt="uniciclo_RTL" src="https://github.com/user-attachments/assets/baca909b-602b-4f49-b813-c058efe9a14c" />
 
 
 ## Report Power
@@ -54,7 +54,7 @@ La arquitectura segmentada introduce 3 etapas de pipeline mediante registros sí
 
 
 ## Diagrama RTL 
-<img width="984" height="422" alt="segmentada_RTL" src="https://github.com/user-attachments/assets/16c7f4a5-97b6-43c8-a3ca-d4c8b4c9c0c4" />
+<img width="984" height="422" alt="segmentada_RTL" src="https://github.com/user-attachments/assets/13827e21-0a54-40b3-9afc-4cc2d4293cc0" />
 
 
 ## Report Power
@@ -66,8 +66,7 @@ La arquitectura segmentada introduce 3 etapas de pipeline mediante registros sí
 
 ** Frecuencia maxima **
 
-  Para el uniciclo hay un detalle importante y es un circuito puramente combinacional, por tanto no tiene reloj. 
-
+La arquitectura segmentada opera a una frecuencia máxima de ≈ 123.5 MHz
 
 
 ---
