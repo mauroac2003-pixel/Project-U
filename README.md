@@ -20,6 +20,8 @@ I Semestre 2026
 
 La arquitectura uniciclo es completamente combinacional, por lo tanto no requiere ciclos de reloj para producir el resultado. La latencia es de 0 ciclos de reloj: el resultado en `dot` aparece inmediatamente tras aplicar las entradas, con un retraso correspondiente únicamente a la propagación de señales a través de los multiplicadores y sumadores.
 
+## Diagrama de tiempos
+<img width="1069" height="430" alt="wave_uniciclo" src="https://github.com/user-attachments/assets/a8dfcfb9-f408-496f-81d7-e4787cd8ff4d" />
 
 
 ## Diagrama RTL 
