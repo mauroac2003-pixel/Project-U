@@ -1,146 +1,90 @@
-# Laboratorio 3 
-## Taller de Diseño Digital – EL3313  
+# Laboratorio 4
+## Taller de Diseño Digital – EL3313
 
-**Estudiantes:**  
-- Navarro Acuña Mauro  
-- Arce Cruz Josué  
-- Arguedas Guzmán Gabriel  
+**Estudiantes:**
+- Navarro Acuña Mauro
+- Arce Cruz Josué
+- Arguedas Guzmán Gabriel
 
-**Profesor:**  
-Luis G. León-Vega Ph.D  
+**Profesor:**
+Luis G. León-Vega Ph.D
 
-Instituto Tecnológico de Costa Rica  
-I Semestre 2026  
-
----
-
-## Actividad 1: Testbench
-
-**1. ¿Cómo se genera la señal del reloj?**
-
-La señal de reloj se genera a partir del bloque de código que se muestra a continuación:
-
-always #5 clk = ~clk;
-
-**2. ¿Cómo se generan los retrasos entre cambios?**
-
-Los retrasos se generar utilizando el operador "#" junto al tiempo de retraso y la variable a retrasar, junto con el estado al estado al cual se quiere cambiar la variable luego del retraso.
-
-Ejemplo: #12 pulse = 1;
-
-**3. ¿Cómo se introducen entradas y se extraen las salidas?**
-
-Las entradas en el DUT (Device Under Test) son controladas mediante variables "reg" en el testbench, estas variables de entrada corresponden a "clk", "rst" y "pulse".
-Las salidas son controladas mediante señales "wire" tales como la señal "count".
-
-**4. ¿Cómo se puede imprimir información tan pronto como las señales cambian?**
-
-Para imprimir información en tiempo real se utiliza la función "$monitor", esta imprime las señales cada vez que cambian.
-En el código se implementó de la siguiente manera: 
-"$monitor("time=%0t rst=%b pulse=%b count=%d", $time, rst, pulse, count);"
+Instituto Tecnológico de Costa Rica
+I Semestre 2026
 
 ---
 
-## Actividad 2: Circuito Anti-rebote
+## Actividad 1: Arquitectura Uniciclo
 
-**1. Presione el botón múltiples veces. ¿La cuenta coincide con el número de veces que presionó?**
+**2. Latencia de la arquitectura uniciclo**
 
-La cuenta no coincide con el numero de veces, un pulso mecánico en el botón está siendo interpretado de manera diferente por el contador de pulsos, a veces da un numero exagerado y la cuenta no coincide. 
-
-**2. ¿Cuál es el fenómeno que causa lo anterior?**
-
-El fenómeno presentado se conoce como rebote (bounce). 
-
-**3. Explique con sus propias palabras qué es rebote.**
-
-Es un fenómeno mecánico debido a la construcción de los botones, sucede cuando se presiona el botón y el contacto interno que indica si el botón esta abierto o cerrado se abre y cierra varias veces muy rápido, dando como resultados pulsaciones falsas.  
-
-**4. ¿Por qué es necesario contar con todos los módulos del anti-rebote?**
-
-Los tres módulos extra funcionan debido a que en conjunto combaten los problemas presentados por la mecánica del botón.
-
-El modulo  button_sync pasa a ser el primer modulo por el cual pasa la señal de pulse cuando se presiona el botón, lee esa señal por ejemplo como 101010111 y ayuda a sincronizar la señal del botón con el reloj de la FPGA y que cambie solo con el clk.
-
-El modulo debounce toma la señal del modulo button_sync y la escanea por decir un termino sencillo y si la señal cambia mucho entonces no se toma en cuenta, si la señal permanece estable por un tiempo considerable entonces lo toma como una señal correcta. 
-
-El edge_detector toma la señal limpia y hace que solo se tome en cuenta cuando se detecte el flanco de subida, ademas de que calcula la señal de salida mediante la operación AND, haciendo pulse_out =  valor de entrada AND ~ valor de entrada, una vez que esa operación da 1, entonces pulse toma el valor de pulse_out.
+La arquitectura uniciclo es completamente combinacional, por lo tanto no requiere ciclos de reloj para producir el resultado. La latencia es de 0 ciclos de reloj: el resultado en `dot` aparece inmediatamente tras aplicar las entradas, con un retraso correspondiente únicamente a la propagación de señales a través de los multiplicadores y sumadores.
 
 ---
 
-## Actividad 3: Circuitos de Reset
+## Actividad 2: Arquitectura Segmentada
 
-**1. ¿Qué sucede cuando uno aplica un rst?**
+**2. Latencia de la arquitectura segmentada**
 
-En el ripple counter con reset síncrono, al aplicar rst se observa que los dos contadores no se resetean al mismo tiempo. El counter0 se resetea en el siguiente flanco negativo del reloj principal, pero el counter1 no se resetea hasta el siguiente flanco negativo de count0[3], que es una señal derivada y más lenta. Esto se vio claramente en la simulación donde al aplicar rst en t=530000, counter0 pasó a 0000 inmediatamente pero counter1 se quedó en 0011 y siguió incrementando durante varios ciclos más antes de resetearse. En hardware esto se traduce en LEDs mostrando valores inconsistentes por un instante al momento del reset.
-
-**2. ¿Cómo puede solucionarse el problema?**
-
-La solución es usar reset asíncrono combinado con un sincronizador de doble flip-flop. El reset asíncrono garantiza que ambos contadores se reseteen instantáneamente sin depender de ningún flanco de reloj, resolviendo el problema de los distintos dominios de reloj del ripple counter. El sincronizador de doble FF se encarga de que la liberación del reset ocurra de forma sincronizada con el reloj principal, evitando metaestabilidad. Esto se verificó tanto en simulación como en la FPGA, donde al subir SW0 todos los LEDs se apagaron al mismo tiempo.
-
-**¿Por qué no es conveniente tener una señal de reset asíncrona en FPGAs?**
-
-Un reset asíncrono puro presenta varios problemas en FPGAs. Primero, cuando el reset se libera puede hacerlo cerca de un flanco activo del reloj, dejando algún flip-flop en estado indeterminado por metaestabilidad. Segundo, en un diseño grande la señal de reset no llega a todos los flip-flops al mismo tiempo debido a retardos de ruteo, dejando el sistema en un estado parcialmente reseteado por un instante. Tercero, las herramientas como Vivado tienen dificultades para analizar el timing de señales asíncronas, lo que puede producir errores que no se detectan en simulación pero sí aparecen en hardware.
-
-**Recomendaciones principales para señales de reset en FPGA:**
-
-- Preferir reset síncrono siempre que sea posible ya que las herramientas lo optimizan mejor.
-- Si se necesita reset asíncrono, usar siempre el patrón async assert, sync deassert con sincronizador de doble FF.
-- Usar una sola fuente de reset distribuida globalmente para que llegue a todos los flip-flops con el menor retardo posible.
-- No resetear flip-flops que no lo necesiten, ya que el reset consume recursos de ruteo adicionales.
-- Evitar generar resets internamente desde lógica combinacional porque pueden producir pulsos espurios por glitches.
+La arquitectura segmentada introduce 3 etapas de pipeline mediante registros síncronos. Por lo tanto, la latencia es de 3 ciclos de reloj desde que se aplican las entradas hasta que el resultado correcto aparece en `dot`. Esto se verificó en la simulación observando que el valor correcto aparece en el tercer flanco de subida del reloj después de establecer las entradas.
 
 ---
 
-## Preguntas de Seguimiento de Aprendizaje
+## Actividad 3: Arquitectura Multiciclo
 
-**1. ¿Cuál es el propósito de un testbench en el proceso de diseño digital? Explique brevemente su función dentro del flujo de verificación.**
+**2. Latencia de la arquitectura multiciclo**
 
-Un testbench es un módulo de simulación, el cual se utiliza para verificar el funcionamiento de un diseño digital antes de su implementación en hardware. Su propósito es observar las salidas del circuito y su comportamiento ante diferentes entradas o señales generadas, como por ejemplo un "clock". Mediante este análisis se logra detectar posibles errores durante la simulación y validar el diseño del circuito antes de implementarlo de manera física.
+La arquitectura multiciclo procesa un elemento del vector por ciclo de reloj. Para n=8 elementos, la latencia es de 8 ciclos de reloj desde que se activa `start=1` hasta que `done=1` y el resultado está disponible en `dot`. Esto se verificó en la simulación contando los flancos de reloj entre la activación de `start` y la señal `done`.
 
-**2. En el experimento inicial, ¿qué comportamiento se observa cuando un botón se conecta directamente al contador sin un circuito anti-rebote?**
+---
 
-Al presionar el botón varias veces, el contador muestra un valor mayor al número real de pulsaciones. Por ejemplo, si se presiona el botón 5 veces, el contador puede mostrar 8, 12 o cualquier valor superior. Esto ocurre porque cada vez que se presiona el botón físicamente, los contactos metálicos no establecen una conexión limpia de inmediato sino que rebotan varias veces en milisegundos, generando múltiples flancos que el contador interpreta como pulsaciones independientes. El comportamiento es impredecible ya que la cantidad de rebotes varía en cada pulsación dependiendo de la velocidad y fuerza con que se presione el botón.
+## Actividad 4: Preguntas de Seguimiento del Aprendizaje
 
-**3. ¿Qué fenómeno físico causa el rebote en los pulsadores mecánicos y cómo afecta el comportamiento del sistema digital?**
+**1. Tabla resumen de microarquitecturas**
 
-El fenómeno causado es debido a las vibraciones mecánicas del botón cuando es pulsado, por lo cual el sistema digital va detectar esas pequeñas vibraciones y las va interpretar como pulsaciones. 
+| Reporte | Uniciclo | Multiciclo | Segmentado |
+|---|---|---|---|
+| Consumo CLBs (%) | | | |
+| Consumo DSPs (%) | | | |
+| Retraso crítico | | | |
+| Frecuencia máxima | | | |
 
-**4. ¿Cuál es la función del sincronizador de entrada antes del circuito anti-rebote?**
+> Nota: completar con los valores obtenidos en Vivado tras síntesis e implementación.
 
-La función es la de estabilizar la señal de entrada y sincronizarla con el reloj de la FPGA.
+---
 
-**5. Explique el principio de funcionamiento del circuito anti-rebote implementado en este laboratorio.**
+**2. ¿Por qué las distintas microarquitecturas consumen menos o más recursos?**
 
-El principio de funcionamiento es tomar la señal de entrada, estabilizarla y sincronizarla con la señal de la FPGA, escanear esa señal para determinar si se mantiene estable por un cierto y si se cumple entonces es valida, si la señal cambia mucho de valor se reinicia el contador, luego esa señal es la entrada al modulo en el cual se genera una señal por ciclo de reloj el cual es usado para enviarla al modulo del contador de pulsos y se usa para contar cuantas veces se presiona el botón. 
+En los diagramas RTL se observa claramente la diferencia en hardware instanciado. La arquitectura uniciclo instancia los 8 multiplicadores y 7 sumadores de forma paralela y simultánea, por lo que consume la mayor cantidad de recursos tanto en CLBs como en DSPs. La arquitectura segmentada instancia la misma cantidad de operadores pero agrega registros de pipeline entre etapas, lo que incrementa ligeramente el uso de flip-flops pero permite operar a mayor frecuencia al reducir el camino crítico.
 
-**6. ¿Cómo influye el valor del parámetro que define el tiempo de filtrado en el funcionamiento del anti-rebote?**
+La arquitectura multiciclo es la que menor cantidad de recursos consume porque reutiliza un único multiplicador y un único sumador en cada ciclo de reloj, cambiando únicamente los operandos mediante un multiplexor. Esto se relaciona directamente con las microarquitecturas de RISC-V: la arquitectura uniciclo de RISC-V instancia una ALU, una memoria de instrucciones y una memoria de datos que solo se usan una vez por instrucción, mientras que la multiciclo reutiliza esos mismos componentes en distintas fases de ejecución (fetch, decode, execute, memory, writeback), reduciendo el área de hardware a costa de mayor latencia.
 
-Ese parámetro influye en el tiempo que se usa para determinar que la señal se considera estable, se conoce como tiempo de filtrado = parámetro/frecuencia de FPGA, por lo cual si el parámetro es muy largo hay pulsaciones que no se tomaran en cuenta y si es muy pequeño se tomaran en cuenta muchas pulsaciones.
+---
 
-**7. Compare el comportamiento del contador utilizando reset síncrono y reset asíncrono. ¿Cuál es la diferencia principal observada en simulación?**
+**3. ¿Cuándo se debe usar una microarquitectura u otra?**
 
-En la simulación se observó claramente la diferencia al aplicar rst en t=530000. Con reset síncrono, counter0 se resetea a 0000 de inmediato pero counter1 se quedó en 0011 y continuó incrementando hasta 0100, 0101 y siguientes durante varios ciclos antes de resetearse, dejando el sistema en un estado inconsistente. Con reset asíncrono, ambos contadores pasaron a 0000 exactamente en el mismo instante sin importar en qué punto del ciclo de reloj se encontraban. La diferencia principal es que el reset síncrono depende del flanco del reloj de cada contador para actuar, y como en un ripple counter cada contador tiene su propio dominio de reloj, el reset no ocurre simultáneamente en todos. El reset asíncrono no tiene esa limitación.
+La elección de microarquitectura depende directamente del contexto de aplicación:
 
-**8. Mencione al menos dos ventajas y dos desventajas del reset síncrono.**
+- **Bajo consumo de potencia y alta duración de batería** (por ejemplo, sensores IoT o dispositivos médicos portátiles como marcapasos o monitores de glucosa): se debe preferir la arquitectura **multiciclo**, ya que al reutilizar las unidades aritméticas solo activa una pequeña parte del hardware en cada ciclo, reduciendo la actividad de conmutación y por ende el consumo dinámico de potencia. El mayor tiempo de cómputo es aceptable si la frecuencia de operación es baja.
 
-Ventajas:
-- Es predecible y fácil de analizar por las herramientas EDA como Vivado, lo que facilita el timing  del diseño.
-- Elimina el riesgo de metaestabilidad porque el reset y su liberación siempre ocurren en el flanco del reloj.
+- **Computación de alto rendimiento** (por ejemplo, aceleradores de IA, procesamiento de señales en tiempo real o simulaciones científicas): se debe preferir la arquitectura **segmentada**, ya que permite procesar múltiples operaciones en paralelo aprovechando el pipeline y opera a la mayor frecuencia posible. El throughput es significativamente mayor al uniciclo y multiciclo una vez que el pipeline está lleno.
 
-Desventajas:
-- Requiere que el reloj esté activo para que el reset tenga efecto, lo que puede ser un problema si el reloj falla.
-- En diseños con múltiples dominios de reloj como el ripple counter, el reset no ocurre simultáneamente en todos los módulos, generando estados inconsistentes.
+- **Medicina con restricciones de latencia determinista** (por ejemplo, sistemas de respuesta en tiempo real como desfibriladores o robots quirúrgicos): puede preferirse la arquitectura **uniciclo** porque su latencia es predecible y mínima en términos de ciclos, siendo adecuada cuando se necesita una respuesta inmediata y el diseño no es crítico en frecuencia.
 
-**9. Mencione al menos dos ventajas y dos desventajas del reset asíncrono.**
+---
 
-Ventajas:
-- Actúa de forma inmediata sin depender del reloj, lo que es útil cuando se necesita detener el sistema instantáneamente.
-- Puede resetear el sistema aunque el reloj esté detenido o funcionando mal.
+**4. ¿Qué tanto difiere el banco de registros implementado del banco de registros de un procesador?**
 
-Desventajas:
-- La liberación del reset puede ocurrir cerca de un flanco activo del reloj y causar metaestabilidad en los flip-flops.
-- En diseños grandes con muchos flip-flops, la señal de reset no llega a todos al mismo tiempo por los retardos de ruteo, dejando el sistema parcialmente reseteado por un instante.
+El banco de registros implementado en este laboratorio es funcional pero simplificado en comparación con el de un procesador real. Las diferencias principales son las siguientes:
 
-**10. Con base en los resultados obtenidos, ¿qué tipo de reset considera más apropiado para sistemas digitales síncronos y por qué?**
+En este laboratorio el banco tiene dos vectores separados (X e Y) de 8 elementos de 8 bits cada uno, con escritura secuencial controlada por switches. En un procesador como RISC-V, el banco de registros tiene 32 registros de propósito general de 32 o 64 bits, con dos puertos de lectura simultánea y un puerto de escritura, todos accesibles en el mismo ciclo de reloj mediante las direcciones rs1, rs2 y rd decodificadas de la instrucción.
 
-Con base en los resultados obtenidos, el reset más apropiado para sistemas digitales síncronos es el patrón combinado de reset asíncrono con sincronizador de doble FF, que es exactamente lo que se implementó en este laboratorio. Este enfoque toma lo mejor de ambos tipos: la activación del reset es asíncrona, lo que garantiza que todos los módulos respondan de forma inmediata sin importar su dominio de reloj, resolviendo el problema observado con el reset síncrono en el ripple counter. La liberación del reset pasa por el sincronizador de doble FF, lo que elimina el riesgo de metaestabilidad al salir del estado de reset. 
+Además, el banco de registros de un procesador está integrado con la etapa de decodificación y el forwarding para resolver hazards de datos, lo cual no aplica en esta implementación. En esencia, este banco cumple la misma función conceptual de almacenar operandos para la unidad aritmética, pero carece de los mecanismos de acceso simultáneo y control que requiere un procesador completo.
+
+---
+
+**5. ¿Cuál microarquitectura ofrece el mejor balance entre rendimiento y consumo de recursos?**
+
+La arquitectura **segmentada** ofrece el mejor balance entre rendimiento y consumo de recursos. Si bien consume más recursos que la multiciclo por los registros de pipeline adicionales, su frecuencia máxima de operación es considerablemente mayor que la uniciclo, ya que el camino crítico se reduce al dividir la operación en etapas. Esto se traduce en un throughput alto: aunque la latencia de la primera operación es de 3 ciclos, a partir de ese punto produce un resultado nuevo cada ciclo de reloj cuando se alimentan operaciones continuas.
+
+La arquitectura uniciclo tiene la menor latencia por operación individual pero su camino crítico limita fuertemente la frecuencia máxima. La multiciclo economiza recursos pero sacrifica significativamente el rendimiento al requerir 8 ciclos por operación. La segmentada es el punto medio que aprovecha el paralelismo temporal del pipeline sin duplicar el hardware, que es exactamente el mismo argumento por el que la mayoría de procesadores modernos, incluyendo implementaciones de RISC-V, utilizan esta microarquitectura como base.
