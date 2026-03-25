@@ -63,10 +63,10 @@ La arquitectura multiciclo procesa un elemento del vector por ciclo de reloj. Pa
 
 | Reporte | Uniciclo | Multiciclo | Segmentado |
 |---|---|---|---|
-| Consumo CLBs (%) | 1| | |
-| Consumo DSPs (%) | 0| | |
-| Retraso crítico | | | |
-| Frecuencia máxima | | | |
+| Consumo CLBs (%) |1| | |
+| Consumo DSPs (%) |0| | |
+| Retraso crítico |2.682 ns| | |
+| Frecuencia máxima |372.9 MHz| | |
 
 > Nota: completar con los valores obtenidos en Vivado tras síntesis e implementación.
 
